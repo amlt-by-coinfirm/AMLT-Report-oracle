@@ -8,7 +8,7 @@
 
 // We lock the Solidity version, per:
 // https://consensys.github.io/smart-contract-best-practices/recommendations/#lock-pragmas-to-specific-compiler-version
-pragma solidity 0.6.10; // Avoiding regressions by using the oldest safe Solidity, instead of the latest
+pragma solidity 0.7.0; // Avoiding regressions by using the oldest safe Solidity, instead of the latest
 
 import "openzeppelin-solidity/contracts/access/AccessControl.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
@@ -16,7 +16,7 @@ import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 contract Recoverable is AccessControl {
     bytes32 public constant RECOVER_ROLE = keccak256("RECOVER_ROLE");
 
-    constructor() public {
+    constructor() {
         _setupRole(RECOVER_ROLE, msg.sender);
     }
 
