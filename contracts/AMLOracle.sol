@@ -23,57 +23,69 @@ contract AMLOracle is AccessControl, Recoverable {
         uint256 fee;
     }
 
-    mapping (address => mapping (string => AMLStatus)) AMLStatuses;
-    mapping (address => uint256) balances; // Cheaper getter (optinally can use EIP-20 compatible balanceOf()).
+    mapping (address => mapping (string => AMLStatus)) private _AMLStatuses;
+    mapping (address => uint256) private _balances;
 
-    address public feeAccount;
+    address private _feeAccount;
+    uint256 private _defaultFee;
 
-    uint256 public defaultFee; // Cheaper getter.
-
-    event AskAMLStatus(string target);
+    event AskAMLStatus(address indexed client, uint256 maxFee, string target);
 
     constructor(address owner) {
         _setupRole(DEFAULT_ADMIN_ROLE, owner);
     }
 
-    function balanceOf(address account) external view returns (uint256 balance) {
-        return balances[account];
+    function setDefaultFee(uint256 defaultFee) external {
+        _defaultFee = defaultFee;
     }
 
-    function setDefaultFee(uint256 _defaultFee) external {
-        defaultFee = defaultFee.add(_defaultFee);
+    function setFeeAccount(address feeAccount) external {
+        _feeAccount = feeAccount;
     }
 
-    function setFeeAccount(address _feeAccount) external {
-        feeAccount = _feeAccount;
+    function askAMLStatus(uint256 maxFee, string calldata target) external {
+        emit AskAMLStatus(msg.sender, maxFee, target);
     }
 
-    function ask(string calldata target) external {
-        emit AskAMLStatus(target);
+    function setAMLStatus(address client, string calldata target, bytes32 amlID, uint8 cScore, uint120 flags, uint256 fee) external {
+        _AMLStatuses[client][target] = AMLStatus(amlID, cScore, flags, uint128(block.timestamp), fee);
     }
 
-    function put(address client, string calldata target, bytes32 amlID, uint8 cScore, uint120 flags, uint256 fee) external {
-        AMLStatuses[client][target] = AMLStatus(amlID, cScore, flags, uint128(block.timestamp), fee);
+    function deleteAMLStatus(address client, string calldata target) external {
+        delete(_AMLStatuses[client][target]);
     }
 
-    function remove(address client, string calldata target) external {
-        delete(AMLStatuses[client][target]);
+    function fetchAMLStatus(string calldata target) external returns (bytes32 amlID, uint8 cScore, uint120 flags) {
+        return _fetchAMLStatus(msg.sender, target);
     }
 
-    function get(string calldata target) external returns (bytes32 amlID, uint8 cScore, uint120 flags) {
-        AMLStatus memory status = AMLStatuses[msg.sender][target];
+    // Provide a way for AMLTOracle to access this data?
+    function getMetadata(string calldata target) external view returns (uint256 timestamp, uint256 fee) {
+        AMLStatus memory status = _AMLStatuses[msg.sender][target];
+        return (status.timestamp, _getFee(status));
+    }
+
+    function getDefaultFee() public view returns (uint256 defaultFee) {
+        return defaultFee;
+    }
+
+    function getFeeAccount() public view returns (address feeAccount) {
+        return _feeAccount;
+    }
+
+    function balanceOf(address account) public view returns (uint256 balance) {
+        return _balances[account];
+    }
+
+    function _fetchAMLStatus(address client, string memory target) internal returns (bytes32 amlID, uint8 cScore, uint120 flags) {
+        AMLStatus memory status = _AMLStatuses[client][target];
         require(status.timestamp > 0, "No such AML Status.");
 
-        balances[msg.sender] = balances[msg.sender].sub(_getFee(status));
-        balances[feeAccount] = balances[feeAccount].add(_getFee(status));
-        delete(AMLStatuses[msg.sender][target]);
+        _balances[client] = _balances[client].sub(_getFee(status));
+        _balances[feeAccount] = _balances[feeAccount].add(_getFee(status));
+        delete(_AMLStatuses[client][target]);
 
         return (status.amlID, status.cScore, status.flags);
-    }
-
-    function getMetadata(string calldata target) external view returns (uint256 timestamp, uint256 fee) {
-        AMLStatus memory status = AMLStatuses[msg.sender][target];
-        return (status.timestamp, _getFee(status));
     }
 
     function _donate(address account, uint256 amount) internal {
@@ -83,11 +95,11 @@ contract AMLOracle is AccessControl, Recoverable {
     }
 
     function _deposit(address account, uint256 amount) internal {
-        balances[account] = balances[account].add(amount);
+        _balances[account] = _balances[account].add(amount);
     }
 
     function _withdraw(address account, uint256 amount) internal {
-        balances[account] = balances[account].sub(amount);
+        _balances[account] = _balances[account].sub(amount);
     }
 
     function _getFee(AMLStatus memory status) internal view returns (uint256 fee) {
