@@ -29,7 +29,8 @@ contract AMLOracle is AccessControl, Recoverable {
     address private _feeAccount;
     uint256 private _defaultFee;
 
-    event AskAMLStatus(address indexed client, uint256 maxFee, string target);
+    event AMLStatusAsked(address indexed client, uint256 maxFee, string target);
+    event Notified(address indexed client, string message);
 
     constructor(address owner) {
         _setupRole(DEFAULT_ADMIN_ROLE, owner);
@@ -43,8 +44,13 @@ contract AMLOracle is AccessControl, Recoverable {
         _feeAccount = feeAccount;
     }
 
+    function notify(address client, string calldata message) external {
+        emit Notified(client, message);
+    }
+
+    // "request" instead of "ask"?
     function askAMLStatus(uint256 maxFee, string calldata target) external {
-        emit AskAMLStatus(msg.sender, maxFee, target);
+        emit AMLStatusAsked(msg.sender, maxFee, target);
     }
 
     function setAMLStatus(address client, string calldata target, bytes32 amlID, uint8 cScore, uint120 flags, uint256 fee) external {
