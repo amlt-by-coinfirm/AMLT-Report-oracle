@@ -48,7 +48,7 @@ contract AMLOracle is AccessControl, Recoverable {
     }
 
     function setAMLStatus(address client, string calldata target, bytes32 amlID, uint8 cScore, uint120 flags, uint256 fee) external {
-        _AMLStatuses[client][target] = AMLStatus(amlID, cScore, flags, uint128(block.timestamp), fee);
+        _AMLStatuses[client][target] = AMLStatus(amlID, cScore, flags, uint128(block.timestamp), fee); // The timestamp is not critical, and will overflow in ~10 nonillion (US) years (10,783,118,943,836,478,994,022,445,749,252)
     }
 
     function deleteAMLStatus(address client, string calldata target) external {
@@ -59,14 +59,12 @@ contract AMLOracle is AccessControl, Recoverable {
         return _fetchAMLStatus(msg.sender, target);
     }
 
-    // Provide a way for AMLTOracle to access this data?
-    function getMetadata(string calldata target) external view returns (uint256 timestamp, uint256 fee) {
-        AMLStatus memory status = _AMLStatuses[msg.sender][target];
-        return (status.timestamp, _getFee(status));
+    function getAMLStatusMetadata(string calldata target) external view returns (uint256 timestamp, uint256 fee) {
+        return _getAMLStatusMetadata(msg.sender, target);
     }
 
     function getDefaultFee() public view returns (uint256 defaultFee) {
-        return defaultFee;
+        return _defaultFee;
     }
 
     function getFeeAccount() public view returns (address feeAccount) {
@@ -77,12 +75,12 @@ contract AMLOracle is AccessControl, Recoverable {
         return _balances[account];
     }
 
-    function _fetchAMLStatus(address client, string memory target) internal returns (bytes32 amlID, uint8 cScore, uint120 flags) {
+    function _fetchAMLStatus(address client, string calldata target) internal returns (bytes32 amlID, uint8 cScore, uint120 flags) {
         AMLStatus memory status = _AMLStatuses[client][target];
         require(status.timestamp > 0, "No such AML Status.");
 
         _balances[client] = _balances[client].sub(_getFee(status));
-        _balances[feeAccount] = _balances[feeAccount].add(_getFee(status));
+        _balances[_feeAccount] = _balances[_feeAccount].add(_getFee(status));
         delete(_AMLStatuses[client][target]);
 
         return (status.amlID, status.cScore, status.flags);
@@ -102,11 +100,16 @@ contract AMLOracle is AccessControl, Recoverable {
         _balances[account] = _balances[account].sub(amount);
     }
 
+    function _getAMLStatusMetadata(address client, string calldata target) internal view returns (uint256 timestamp, uint256 fee) {
+        AMLStatus memory status = _AMLStatuses[client][target];
+        return (status.timestamp, _getFee(status));
+    }
+
     function _getFee(AMLStatus memory status) internal view returns (uint256 fee) {
         if (status.fee > 0) { // Braces for clarity
             return status.fee;
         } else {
-            return defaultFee;
+            return _defaultFee;
         }
     }
 }
