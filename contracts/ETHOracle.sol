@@ -8,7 +8,6 @@ import 'openzeppelin-solidity/contracts/utils/Address.sol';
 import "./AMLOracle.sol";
 
 contract ETHOracle is AMLOracle {
-    using SafeMath for uint256; // Applicable only for uint256
     using Address for address payable;
 
     constructor(address owner) AMLOracle(owner) {
