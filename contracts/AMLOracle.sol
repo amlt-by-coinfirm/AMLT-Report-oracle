@@ -32,8 +32,8 @@ contract AMLOracle is AccessControl, Recoverable {
     event AMLStatusAsked(address indexed client, uint256 maxFee, string target);
     event Notified(address indexed client, string message);
 
-    constructor(address owner) {
-        _setupRole(DEFAULT_ADMIN_ROLE, owner);
+    constructor(address admin) {
+        _setupRole(DEFAULT_ADMIN_ROLE, admin);
     }
 
     function setDefaultFee(uint256 defaultFee) external {

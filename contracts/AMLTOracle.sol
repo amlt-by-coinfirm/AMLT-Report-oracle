@@ -13,7 +13,7 @@ contract AMLTOracle is AMLOracle {
     IERC20 public AMLToken;
     uint256 public totalBalance;
 
-    constructor(address owner, IERC20 _AMLToken) AMLOracle(owner) {
+    constructor(address admin, IERC20 _AMLToken) AMLOracle(admin) {
         AMLToken = _AMLToken;
     }
 

@@ -10,7 +10,7 @@ import "./AMLOracle.sol";
 contract ETHOracle is AMLOracle {
     using Address for address payable;
 
-    constructor(address owner) AMLOracle(owner) {
+    constructor(address admin) AMLOracle(admin) {
 
     }
 
