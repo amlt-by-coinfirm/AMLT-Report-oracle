@@ -23,7 +23,7 @@ contract Recoverable is AccessControl {
     /// @dev This will be invoked by the admin, when admin wants to rescue tokens
     /// @param token Token which will we rescue to the admin from the contract
     function recoverTokens(IERC20 token) public {
-        require(hasRole(RECOVER_ROLE, msg.sender), "Caller is not allowed to recover tokens!");
+        require(hasRole(RECOVER_ROLE, msg.sender), "Recoverable: Caller is not allowed to recover tokens");
         token.transfer(msg.sender, tokensToBeReturned(token));
     }
 

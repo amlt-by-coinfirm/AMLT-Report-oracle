@@ -12,6 +12,12 @@ import './Recoverable.sol';
 contract AMLOracle is AccessControl, Recoverable {
     using SafeMath for uint256; // Applicable only for uint256
 
+    bytes32 public constant SET_DEFAULT_FEE_ROLE = keccak256("setDefaultFee()");
+    bytes32 public constant SET_FEE_ACCOUNT_ROLE = keccak256("setFeeAccount()");
+    bytes32 public constant NOTIFY_ROLE = keccak256("notify()");
+    bytes32 public constant SET_AML_STATUS_ROLE = keccak256("setAMLStatus()");
+    bytes32 public constant SET_DELETE_AML_STATUS_ROLE = keccak256("deleteAMLStatus()");
+
     IERC1820Registry constant ERC1820REGISTRY = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
     bytes32 constant INTERFACEHASH = keccak256(abi.encodePacked("AMLOracleAcceptDonations"));
 
@@ -34,31 +40,47 @@ contract AMLOracle is AccessControl, Recoverable {
 
     constructor(address admin) {
         _setupRole(DEFAULT_ADMIN_ROLE, admin);
+        _setupRole(SET_DEFAULT_FEE_ROLE, admin);
+        _setupRole(SET_FEE_ACCOUNT_ROLE, admin);
+        _setupRole(NOTIFY_ROLE, admin);
+        _setupRole(SET_AML_STATUS_ROLE, admin);
+        _setupRole(SET_DELETE_AML_STATUS_ROLE, admin);
+
     }
 
     function setDefaultFee(uint256 defaultFee) external {
+        require(hasRole(SET_DEFAULT_FEE_ROLE, msg.sender), "AMLOracle: Caller is not allowed to set the default fee");
+
         _defaultFee = defaultFee;
     }
 
     function setFeeAccount(address feeAccount) external {
+        require(hasRole(SET_FEE_ACCOUNT_ROLE, msg.sender), "AMLOracle: Caller is not allowed to set the fee account");
+
         _feeAccount = feeAccount;
     }
 
     function notify(address client, string calldata message) external {
+        require(hasRole(NOTIFY_ROLE, msg.sender), "AMLOracle: Caller is not allowed to notify the clients");
+
         emit Notified(client, message);
+    }
+
+    function setAMLStatus(address client, string calldata target, bytes32 amlID, uint8 cScore, uint120 flags, uint256 fee) external {
+        require(hasRole(SET_AML_STATUS_ROLE, msg.sender), "AMLOracle: Caller is not allowed to set AML Statuses");
+
+        _AMLStatuses[client][target] = AMLStatus(amlID, cScore, flags, uint128(block.timestamp), fee); // The timestamp is not critical, and will overflow in ~10 nonillion (US) years (10,783,118,943,836,478,994,022,445,749,252)
+    }
+
+    function deleteAMLStatus(address client, string calldata target) external {
+        require(hasRole(SET_DELETE_AML_STATUS_ROLE, msg.sender), "AMLOracle: Caller is not allowed to delete AML Statuses");
+
+        delete(_AMLStatuses[client][target]);
     }
 
     // "request" instead of "ask"?
     function askAMLStatus(uint256 maxFee, string calldata target) external {
         emit AMLStatusAsked(msg.sender, maxFee, target);
-    }
-
-    function setAMLStatus(address client, string calldata target, bytes32 amlID, uint8 cScore, uint120 flags, uint256 fee) external {
-        _AMLStatuses[client][target] = AMLStatus(amlID, cScore, flags, uint128(block.timestamp), fee); // The timestamp is not critical, and will overflow in ~10 nonillion (US) years (10,783,118,943,836,478,994,022,445,749,252)
-    }
-
-    function deleteAMLStatus(address client, string calldata target) external {
-        delete(_AMLStatuses[client][target]);
     }
 
     function fetchAMLStatus(string calldata target) external returns (bytes32 amlID, uint8 cScore, uint120 flags) {
