@@ -66,7 +66,9 @@ contract AMLOracle is AccessControl, Recoverable {
     }
 
     function getAMLStatusMetadata(string calldata target) external view returns (uint256 timestamp, uint256 fee) {
-        return _getAMLStatusMetadata(msg.sender, target);
+        AMLStatus memory status = _getAMLStatusCopy(msg.sender, target);
+
+        return (status.timestamp, _getFee(status));
     }
 
     function getDefaultFee() public view returns (uint256 defaultFee) {
@@ -82,12 +84,12 @@ contract AMLOracle is AccessControl, Recoverable {
     }
 
     function _fetchAMLStatus(address client, string calldata target) internal returns (bytes32 amlID, uint8 cScore, uint120 flags) {
-        AMLStatus memory status = _AMLStatuses[client][target];
+        AMLStatus memory status = _getAMLStatusCopy(client, target);
         require(status.timestamp > 0, "No such AML Status.");
 
         _balances[client] = _balances[client].sub(_getFee(status));
         _balances[_feeAccount] = _balances[_feeAccount].add(_getFee(status));
-        delete(_AMLStatuses[client][target]);
+        delete(_AMLStatuses[client][target]); //!
 
         return (status.amlID, status.cScore, status.flags);
     }
@@ -106,9 +108,8 @@ contract AMLOracle is AccessControl, Recoverable {
         _balances[account] = _balances[account].sub(amount);
     }
 
-    function _getAMLStatusMetadata(address client, string calldata target) internal view returns (uint256 timestamp, uint256 fee) {
-        AMLStatus memory status = _AMLStatuses[client][target];
-        return (status.timestamp, _getFee(status));
+    function _getAMLStatusCopy(address client, string calldata target) internal view returns (AMLStatus memory status) {
+        return _AMLStatuses[client][target];
     }
 
     function _getFee(AMLStatus memory status) internal view returns (uint256 fee) {

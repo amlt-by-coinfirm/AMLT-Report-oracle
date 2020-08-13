@@ -38,6 +38,18 @@ contract AMLTOracle is AMLOracle {
         }
     }
 
+    function fetchAMLStatusForAMLT(string calldata target) external returns (bytes32 amlID, uint8 cScore, uint120 flags) {
+        AMLStatus memory status = _getAMLStatusCopy(msg.sender, target);
+        uint256 fee = _getFee(status);
+
+        _deposit(msg.sender, fee);
+
+        _fetchAMLStatus(msg.sender, target);
+        _transferHere(msg.sender, fee); // Checks-Effects-Interactions!
+
+        return (status.amlID, status.cScore, status.flags);
+    }
+
     function tokensToBeReturned(IERC20 token) public view override returns (uint256) {
         if (address(token) == address(AMLToken)) {
             return token.balanceOf(address(this)).sub(totalBalance);
