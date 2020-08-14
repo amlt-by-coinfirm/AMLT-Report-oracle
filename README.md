@@ -12,4 +12,6 @@ Design choices:
   * https://ethereum.stackexchange.com/questions/67137/why-creating-a-private-variable-and-a-getter-instead-of-just-creating-a-public-v
   * virtual/override
   * Explain why AMLOracle is not a library
+  * Return variables are named, but still we use "return;" (OpenZeppelin and new NatSpec)
+  * No encryption due to technical limitations (client smart contracts should be able to decrypt it themselves)
   

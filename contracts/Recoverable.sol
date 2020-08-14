@@ -16,6 +16,8 @@ import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 contract Recoverable is AccessControl {
     bytes32 public constant RECOVER_ROLE = keccak256("RECOVER_ROLE");
 
+    event Recovered(IERC20 indexed token, uint256 amount);
+
     constructor() {
         _setupRole(RECOVER_ROLE, msg.sender);
     }
@@ -24,13 +26,20 @@ contract Recoverable is AccessControl {
     /// @param token Token which will we rescue to the admin from the contract
     function recoverTokens(IERC20 token) public {
         require(hasRole(RECOVER_ROLE, msg.sender), "Recoverable: Caller is not allowed to recover tokens");
-        token.transfer(msg.sender, tokensToBeReturned(token));
+
+        uint256 amount = _tokensToBeReturned(token);
+
+        try token.transfer(msg.sender, amount) {
+            emit Recovered(token, amount); // This is in addition to the event emitted by transfer()
+        } catch {
+            revert("Recoverable: transfer() during token recovery failed");
+        }
     }
 
     /// @dev Interface function, can be overwritten by the superclass
     /// @param token Token which balance we will check and return
-    /// @return The amount of tokens (in smallest denominator) the contract owns
-    function tokensToBeReturned(IERC20 token) public view virtual returns (uint256) {
+    /// @return amount The amount of tokens (in smallest denominator) the contract owns
+    function _tokensToBeReturned(IERC20 token) internal view virtual returns (uint256 amount) {
         return token.balanceOf(address(this));
     }
 }

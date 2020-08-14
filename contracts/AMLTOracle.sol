@@ -18,7 +18,7 @@ contract AMLTOracle is AMLOracle {
     }
 
     function donateAMLT(address client, uint256 amount) external {
-        _donate(client, amount);
+        _donate(msg.sender, client, amount);
         _transferHere(msg.sender, amount);
     }
 
@@ -50,7 +50,7 @@ contract AMLTOracle is AMLOracle {
         return (status.amlID, status.cScore, status.flags);
     }
 
-    function tokensToBeReturned(IERC20 token) public view override returns (uint256) {
+    function _tokensToBeReturned(IERC20 token) internal view override returns (uint256 amount) {
         if (address(token) == address(AMLToken)) {
             return token.balanceOf(address(this)).sub(totalBalance);
         } else {
