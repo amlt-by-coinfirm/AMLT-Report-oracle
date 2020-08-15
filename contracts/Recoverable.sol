@@ -22,8 +22,6 @@ contract Recoverable is AccessControl {
         _setupRole(RECOVER_ROLE, msg.sender);
     }
 
-    /// @dev This will be invoked by the admin, when admin wants to rescue tokens
-    /// @param token Token which will we rescue to the admin from the contract
     function recoverTokens(IERC20 token) public {
         require(hasRole(RECOVER_ROLE, msg.sender), "Recoverable: Caller is not allowed to recover tokens");
 
@@ -36,9 +34,6 @@ contract Recoverable is AccessControl {
         }
     }
 
-    /// @dev Interface function, can be overwritten by the superclass
-    /// @param token Token which balance we will check and return
-    /// @return amount The amount of tokens (in smallest denominator) the contract owns
     function _tokensToBeReturned(IERC20 token) internal view virtual returns (uint256 amount) {
         return token.balanceOf(address(this));
     }

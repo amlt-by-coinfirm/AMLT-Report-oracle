@@ -81,6 +81,7 @@ contract AMLOracle is AccessControl, Recoverable {
 
     function setAMLStatus(address client, string calldata target, bytes32 amlID, uint8 cScore, uint120 flags, uint256 fee) external {
         require(hasRole(SET_AML_STATUS_ROLE, msg.sender), "AMLOracle: Caller is not allowed to set AML Statuses");
+        require(cScore < 100, "AMLOracle: The cScore must be between 0 and 99");
         AMLStatus memory status;
 
         status = AMLStatus(amlID, cScore, flags, uint128(block.timestamp), fee); // The timestamp is not critical, and will overflow in ~10 nonillion (US) years (10,783,118,943,836,478,994,022,445,749,252)

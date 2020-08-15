@@ -28,7 +28,7 @@ contract("AMLOracle", async accounts => {
 
     it("Remove and restore 'RECOVER_ROLE'", async () => {
       await AMLOracle.revokeRole(web3.utils.soliditySha3('RECOVER_ROLE'), accounts[0]);
-      await truffleAssert.reverts(AMLOracle.recoverTokens(TestToken1Contract.address), "Caller is not allowed to recover tokens!");
+      await truffleAssert.reverts(AMLOracle.recoverTokens(TestToken1Contract.address), "Recoverable: Caller is not allowed to recover tokens");
       await AMLOracle.grantRole(web3.utils.soliditySha3('RECOVER_ROLE'), accounts[0]);
       await AMLOracle.recoverTokens(TestToken1Contract.address);
     });

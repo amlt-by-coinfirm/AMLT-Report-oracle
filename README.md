@@ -14,4 +14,5 @@ Design choices:
   * Explain why AMLOracle is not a library
   * Return variables are named, but still we use "return;" (OpenZeppelin and new NatSpec)
   * No encryption due to technical limitations (client smart contracts should be able to decrypt it themselves)
+  * Assert() strategy: at the end of the function try to get the same result, like in elementary school mathematics
   
