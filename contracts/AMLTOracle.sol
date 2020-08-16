@@ -50,7 +50,7 @@ contract AMLTOracle is AMLOracle {
 
     function _tokensToBeReturned(IERC20 token) internal view override returns (uint256 amount) {
         if (address(token) == address(AMLToken)) {
-            return _getTokenBalance(token).sub(_getTotalDeposits());
+            return _getTotalBalance().sub(_getTotalDeposits());
         } else {
             return _getTokenBalance(token);
         }
@@ -62,5 +62,9 @@ contract AMLTOracle is AMLOracle {
         } catch {
             revert("AMLTOracle: Token transferFrom() failed");
         }
+    }
+
+    function _getTotalBalance() internal virtual override view returns (uint256 balance) {
+        return _getTokenBalance(AMLToken);
     }
 }

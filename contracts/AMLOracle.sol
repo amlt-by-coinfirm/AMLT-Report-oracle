@@ -64,6 +64,7 @@ abstract contract AMLOracle is AccessControl, Recoverable {
         emit DefaultFeeSet(msg.sender, _defaultFee, defaultFee_);
 
         _defaultFee = defaultFee_;
+        assert(_defaultFee == defaultFee_);
     }
 
     function setFeeAccount(address feeAccount_) external {
@@ -72,6 +73,7 @@ abstract contract AMLOracle is AccessControl, Recoverable {
         emit FeeAccountSet(msg.sender, _feeAccount, feeAccount_);
 
         _feeAccount = feeAccount_;
+        assert(_feeAccount == feeAccount_);
     }
 
     function notify(address client, string calldata message) external {
@@ -154,6 +156,7 @@ abstract contract AMLOracle is AccessControl, Recoverable {
         _balances[account] = _balances[account].add(amount);
         _totalDeposits = _totalDeposits.add(amount);
 
+        assert(_getTotalBalance() >= _totalDeposits);
         emit Deposited(account, amount);
     }
 
@@ -165,6 +168,7 @@ abstract contract AMLOracle is AccessControl, Recoverable {
             // Assert here
         }
 
+        assert(_getTotalBalance() >= _totalDeposits);
         emit Withdrawn(account, amount);
     }
 
@@ -183,4 +187,6 @@ abstract contract AMLOracle is AccessControl, Recoverable {
             return _defaultFee;
         }
     }
+
+    function _getTotalBalance() internal virtual view returns (uint256 balance);
 }

@@ -35,4 +35,8 @@ contract ETHOracle is AMLOracle {
         _deposit(msg.sender, msg.value);
         return _fetchAMLStatus(msg.sender, target);
     }
+
+    function _getTotalBalance() internal virtual override view returns (uint256 balance) {
+        return address(this).balance;
+    }
 }
