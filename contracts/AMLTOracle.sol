@@ -11,7 +11,6 @@ contract AMLTOracle is AMLOracle {
     using SafeMath for uint256; // Applicable only for uint256
 
     IERC20 public AMLToken;
-    uint256 public totalBalance;
 
     constructor(address admin, IERC20 _AMLToken) AMLOracle(admin) {
         AMLToken = _AMLToken;
@@ -28,7 +27,6 @@ contract AMLTOracle is AMLOracle {
     }
 
     function withdrawAMLT(uint256 amount) external {
-        totalBalance = totalBalance.sub(amount);
         _withdraw(msg.sender, amount);
 
         try AMLToken.transfer(msg.sender, amount) {
@@ -52,15 +50,13 @@ contract AMLTOracle is AMLOracle {
 
     function _tokensToBeReturned(IERC20 token) internal view override returns (uint256 amount) {
         if (address(token) == address(AMLToken)) {
-            return token.balanceOf(address(this)).sub(totalBalance);
+            return _getTokenBalance(token).sub(_getTotalDeposits());
         } else {
-            return token.balanceOf(address(this));
+            return _getTokenBalance(token);
         }
     }
 
     function _transferHere(address from, uint256 amount) internal {
-        totalBalance = totalBalance.add(amount);
-
         try AMLToken.transferFrom(from, address(this), amount) {
             return;
         } catch {

@@ -9,7 +9,7 @@ import 'openzeppelin-solidity/contracts/access/AccessControl.sol';
 import 'openzeppelin-solidity/contracts/math/SafeMath.sol';
 import './Recoverable.sol';
 
-contract AMLOracle is AccessControl, Recoverable {
+abstract contract AMLOracle is AccessControl, Recoverable {
     using SafeMath for uint256; // Applicable only for uint256
 
     struct AMLStatus {
@@ -33,6 +33,7 @@ contract AMLOracle is AccessControl, Recoverable {
     mapping (address => mapping (string => AMLStatus)) private _AMLStatuses;
     mapping (address => uint256) private _balances;
 
+    uint256 private _totalDeposits;
     address private _feeAccount;
     uint256 private _defaultFee;
 
@@ -104,6 +105,7 @@ contract AMLOracle is AccessControl, Recoverable {
         return _fetchAMLStatus(msg.sender, target);
     }
 
+    // Consider supporting issuing a "client"?
     function getAMLStatusMetadata(string calldata target) external view returns (uint256 timestamp, uint256 fee) {
         AMLStatus memory status = _getAMLStatusCopy(msg.sender, target);
 
@@ -150,18 +152,24 @@ contract AMLOracle is AccessControl, Recoverable {
 
     function _deposit(address account, uint256 amount) internal {
         _balances[account] = _balances[account].add(amount);
+        _totalDeposits = _totalDeposits.add(amount);
 
         emit Deposited(account, amount);
     }
 
     function _withdraw(address account, uint256 amount) internal {
         _balances[account] = _balances[account].sub(amount);
+        _totalDeposits = _totalDeposits.sub(amount);
 
         if (!hasRole(FORCE_WITHDRAW_ROLE, account)) {
             // Assert here
         }
 
         emit Withdrawn(account, amount);
+    }
+
+    function _getTotalDeposits() internal view returns (uint256 totalDeposits) {
+        return _totalDeposits;
     }
 
     function _getAMLStatusCopy(address client, string calldata target) internal view returns (AMLStatus memory status) {

@@ -34,7 +34,15 @@ contract Recoverable is AccessControl {
         }
     }
 
+    function _getTokenBalance(IERC20 token) internal view virtual returns (uint256 amount) {
+        try token.balanceOf(address(this)) returns (uint256 balance) {
+            return balance;
+        } catch {
+            revert("Recoverable: could not query the token balance");
+        }
+    }
+
     function _tokensToBeReturned(IERC20 token) internal view virtual returns (uint256 amount) {
-        return token.balanceOf(address(this));
+        return _getTokenBalance(token);
     }
 }
