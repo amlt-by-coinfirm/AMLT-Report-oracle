@@ -13,24 +13,24 @@ pragma solidity 0.7.0; // Avoiding regressions by using the oldest safe Solidity
 import "openzeppelin-solidity/contracts/access/AccessControl.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 
-contract Recoverable is AccessControl {
-    bytes32 public constant RECOVER_ROLE = keccak256("RECOVER_ROLE");
+contract RecoverTokens is AccessControl {
+    bytes32 public constant RECOVER_TOKENS_ROLE = keccak256("recoverTokens()");
 
-    event Recovered(IERC20 indexed token, uint256 amount);
+    event RecoveredTokens(IERC20 indexed token, uint256 amount);
 
     constructor() {
-        _setupRole(RECOVER_ROLE, msg.sender);
+        _setupRole(RECOVER_TOKENS_ROLE, msg.sender);
     }
 
     function recoverTokens(IERC20 token) public {
-        require(hasRole(RECOVER_ROLE, msg.sender), "Recoverable: Caller is not allowed to recover tokens");
+        require(hasRole(RECOVER_TOKENS_ROLE, msg.sender), "RecoverTokens: Caller is not allowed to recover tokens");
 
-        uint256 amount = _tokensToBeReturned(token);
+        uint256 amount = _tokensToBeRecovered(token);
 
         try token.transfer(msg.sender, amount) {
-            emit Recovered(token, amount); // This is in addition to the event emitted by transfer()
+            emit RecoveredTokens(token, amount); // This is in addition to the event emitted by transfer()
         } catch {
-            revert("Recoverable: transfer() during token recovery failed");
+            revert("RecoverTokens: transfer() during token recovery failed");
         }
     }
 
@@ -38,11 +38,11 @@ contract Recoverable is AccessControl {
         try token.balanceOf(address(this)) returns (uint256 balance) {
             return balance;
         } catch {
-            revert("Recoverable: could not query the token balance");
+            revert("RecoverTokens: could not query the token balance");
         }
     }
 
-    function _tokensToBeReturned(IERC20 token) internal view virtual returns (uint256 amount) {
+    function _tokensToBeRecovered(IERC20 token) internal view virtual returns (uint256 amount) {
         return _getTokenBalance(token);
     }
 }

@@ -7,9 +7,9 @@ pragma solidity 0.7.0; // Avoiding regressions by using the oldest safe Solidity
 import "openzeppelin-solidity/contracts/introspection/IERC1820Registry.sol";
 import 'openzeppelin-solidity/contracts/access/AccessControl.sol';
 import 'openzeppelin-solidity/contracts/math/SafeMath.sol';
-import './Recoverable.sol';
+import './RecoverTokens.sol';
 
-abstract contract AMLOracle is AccessControl, Recoverable {
+abstract contract AMLOracle is AccessControl, RecoverTokens {
     using SafeMath for uint256; // Applicable only for uint256
 
     struct AMLStatus {

@@ -48,7 +48,7 @@ contract AMLTOracle is AMLOracle {
         return (status.amlID, status.cScore, status.flags);
     }
 
-    function _tokensToBeReturned(IERC20 token) internal view override returns (uint256 amount) {
+    function _tokensToBeRecovered(IERC20 token) internal view override returns (uint256 amount) {
         if (address(token) == address(AMLToken)) {
             return _getTotalBalance().sub(_getTotalDeposits());
         } else {
@@ -65,6 +65,10 @@ contract AMLTOracle is AMLOracle {
     }
 
     function _getTotalBalance() internal virtual override view returns (uint256 balance) {
-        return _getTokenBalance(AMLToken);
+        try AMLToken.balanceOf(address(this)) returns (uint256 balance) {
+            return balance;
+        } catch {
+            revert("AMLTOracle: could not fetch total balance"); // Unique error message
+        }
     }
 }
