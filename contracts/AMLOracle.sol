@@ -37,8 +37,8 @@ abstract contract AMLOracle is AccessControl, Recoverable {
     address private _feeAccount;
     uint256 private _defaultFee;
 
-    event DefaultFeeSet(address indexed setter, uint256 oldFee, uint256 newFee);
-    event FeeAccountSet(address indexed setter, address oldFeeAccount, address newFeeAccount);
+    event DefaultFeeSet(uint256 oldDefaultFee, uint256 newDefaultFee);
+    event FeeAccountSet(address oldFeeAccount, address newFeeAccount);
     event Notified(address indexed client, string message);
     event AMLStatusDeleted(address indexed client, string target);
     event AMLStatusAsked(address indexed client, uint256 maxFee, string target);
@@ -56,12 +56,14 @@ abstract contract AMLOracle is AccessControl, Recoverable {
         _setupRole(SET_AML_STATUS_ROLE, admin);
         _setupRole(SET_DELETE_AML_STATUS_ROLE, admin);
         _setupRole(FORCE_WITHDRAW_ROLE, admin);
+
+        _feeAccount = admin;
     }
 
     function setDefaultFee(uint256 defaultFee_) external {
         require(hasRole(SET_DEFAULT_FEE_ROLE, msg.sender), "AMLOracle: Caller is not allowed to set the default fee");
 
-        emit DefaultFeeSet(msg.sender, _defaultFee, defaultFee_);
+        emit DefaultFeeSet(_defaultFee, defaultFee_); // Omitting setter for consistency
 
         _defaultFee = defaultFee_;
         assert(_defaultFee == defaultFee_);
@@ -70,7 +72,7 @@ abstract contract AMLOracle is AccessControl, Recoverable {
     function setFeeAccount(address feeAccount_) external {
         require(hasRole(SET_FEE_ACCOUNT_ROLE, msg.sender), "AMLOracle: Caller is not allowed to set the fee account");
 
-        emit FeeAccountSet(msg.sender, _feeAccount, feeAccount_);
+        emit FeeAccountSet(_feeAccount, feeAccount_); // Omitting setter for consistency
 
         _feeAccount = feeAccount_;
         assert(_feeAccount == feeAccount_);
@@ -95,6 +97,7 @@ abstract contract AMLOracle is AccessControl, Recoverable {
         require(hasRole(SET_DELETE_AML_STATUS_ROLE, msg.sender), "AMLOracle: Caller is not allowed to delete AML Statuses");
 
         delete(_AMLStatuses[client][target]);
+        // No assert needed: even if the entry is not toally deleted, it's not a problem
         emit AMLStatusDeleted(client, target);
     }
 
@@ -107,9 +110,9 @@ abstract contract AMLOracle is AccessControl, Recoverable {
         return _fetchAMLStatus(msg.sender, target);
     }
 
-    // Consider supporting issuing a "client"?
-    function getAMLStatusMetadata(string calldata target) external view returns (uint256 timestamp, uint256 fee) {
-        AMLStatus memory status = _getAMLStatusCopy(msg.sender, target);
+    // Consider supporting issuing a "client"? It's not classified
+    function getAMLStatusMetadata(address client, string calldata target) external view returns (uint256 timestamp, uint256 fee) {
+        AMLStatus memory status = _getAMLStatusCopy(client, target);
 
         return (status.timestamp, _getFee(status));
     }
@@ -165,10 +168,9 @@ abstract contract AMLOracle is AccessControl, Recoverable {
         _totalDeposits = _totalDeposits.sub(amount);
 
         if (!hasRole(FORCE_WITHDRAW_ROLE, account)) {
-            // Assert here
+            assert(_getTotalBalance() >= _totalDeposits);
         }
 
-        assert(_getTotalBalance() >= _totalDeposits);
         emit Withdrawn(account, amount);
     }
 
