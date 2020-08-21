@@ -7,11 +7,47 @@ pragma solidity 0.7.0; // Avoiding regressions by using the oldest safe Solidity
 import "openzeppelin-solidity/contracts/introspection/IERC1820Registry.sol";
 import 'openzeppelin-solidity/contracts/access/AccessControl.sol';
 import 'openzeppelin-solidity/contracts/math/SafeMath.sol';
-import './RecoverTokens.sol';
 
-abstract contract AMLOracle is AccessControl, RecoverTokens {
+/**
+ * @title BaseAMLOracle - the abstract base contract for developing AML Oracles
+ * @author Ville Sundell <development@solarius.fi>
+ * @dev This is the base contract for developing AML Oracles. AML Oracles
+ * itself will consist of two parts:
+ *  - payment logic implemented by the AML Oracle itself, and
+ *  - rest of the AML Oracle logic, including AML Status handling and
+ *    non-custodial logic implemented in this contract.
+ *
+ * This contract covers:
+ *  - non-custodial logic ({}),
+ *  - AML Status handling logic ({}), and
+ *  - fee handling.
+ *
+ * We follow modern OpenZeppelin design pattern on contract encapsulation,
+ * that's why we are using mainly `private` state variables with `internal`
+ * setters and getters.
+ *
+ * We also implement our own design pattern where client smart contract
+ * accessible entry points are marked `external` for two reasons: semantically
+ * it marks a user-accessible entry point, and gives us marginal gas savings
+ * when handling complex data types. Setters and getters from OpenZeppelin's
+ * contract encapsulation pattern also supports our pattern.
+ *
+ * We also implement a granular role-based access control by inheriting
+ * {AccessControl}. Because we combine role-based access control with function
+ * based access control, we use function names as our role names. Role check is
+ * done in `external` functions, where applicable.
+ *
+ * Although our access control model is consistently function based, there is
+ * one exception: FORCE_WITHDRAW_ROLE which can be used to skip the `assert()`
+ * upon withdrawal if there is ever such need.
+ *
+ * At first the _Oracle Operator_ is the _Admin_, but later the Operator can
+ * assign various other actors to various roles, including the Admin.
+ */
+abstract contract BaseAMLOracle is AccessControl {
     using SafeMath for uint256; // Applicable only for uint256
 
+    /// @dev The core structure containing all the information for an AML Status
     struct AMLStatus {
         bytes32 amlID;
         uint8 cScore;
@@ -20,6 +56,7 @@ abstract contract AMLOracle is AccessControl, RecoverTokens {
         uint256 fee;
     }
 
+    // Roles for our Role Based Access Control model which combines function based access control:
     bytes32 public constant SET_DEFAULT_FEE_ROLE = keccak256("setDefaultFee()");
     bytes32 public constant SET_FEE_ACCOUNT_ROLE = keccak256("setFeeAccount()");
     bytes32 public constant NOTIFY_ROLE = keccak256("notify()");
@@ -27,25 +64,143 @@ abstract contract AMLOracle is AccessControl, RecoverTokens {
     bytes32 public constant SET_DELETE_AML_STATUS_ROLE = keccak256("deleteAMLStatus()");
     bytes32 public constant FORCE_WITHDRAW_ROLE = keccak256("FORCE_WITHDRAW");
 
+    // Two hard-coded constants for our ERC1820 support:
     IERC1820Registry constant ERC1820REGISTRY = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
     bytes32 constant INTERFACEHASH = keccak256(abi.encodePacked("AMLOracleAcceptDonations"));
 
+    /// @dev All the {AMLStatus} entries reside here
     mapping (address => mapping (string => AMLStatus)) private _AMLStatuses;
+    /// @dev Balance tracking for non-custodial and fee handling logic is done here
     mapping (address => uint256) private _balances;
 
+    /// @dev Primary purpose is to provide `assert()`s regarding our
+    /// non-custodial logic a way to compare balances.
     uint256 private _totalDeposits;
+    /// @dev This is the account where the fees are paid upon `_fetchAMLStatus()`
     address private _feeAccount;
+    /// @dev We store default fee, so upon placing an {AMLStatus} on chain, we
+    /// can save some gas by not setting the fee, if so desired.
     uint256 private _defaultFee;
 
+    /**
+     * @dev Emitted when default fee is set/changed.
+     *
+     * Although it might make sense first to specify also the setter (because
+     * of our Role Based Access Control there might be multiple), but in the
+     * end that's not relevant information during normal operation. If some day
+     * forensics is needed, the event is linked to the transaction which can be
+     * used to determine the setter.
+     *
+     * @param oldDefaultFee What was the default fee before this event was
+     * emitted
+     * @param newDefaultFee What is the default fee after this event  was
+     * emitted, and onwards
+     */
     event DefaultFeeSet(uint256 oldDefaultFee, uint256 newDefaultFee);
+
+    /**
+     * @dev Emitted when the account where to fee will be paid, is changed.
+     *
+     * Although it might make sense first to specify also the setter (because
+     * of our Role Based Access Control there might be multiple), but in the
+     * end that's not relevant information during normal operation. If some day
+     * forensics is needed, the event is linked to the transaction which can be
+     * used to determine the setter.
+     *
+     * @param oldFeeAccount The fee account before this event was emitted
+     * @param newFeeAccount The fee account after this event was emitted, and
+     * onwards.
+     */
     event FeeAccountSet(address oldFeeAccount, address newFeeAccount);
+
+    /**
+     * @dev Emitted when the Oracle Operator wants to communicate with the
+     * client smart contract.
+     *
+     * Possible reasons include errors during AML status determination,
+     * throttling because of suspected spam, or insufficient credit.
+     *
+     * Events are not readable by smart contracts, and this is intentional:
+     * afterall, the client smart contract should act only on succesfull AML
+     * Status requests. The errors are readable (and should be monitored) by
+     * the client smart contract operator(s), if any.
+     *
+     * @param client The client smart contract, which is the recipient of the
+     * communication
+     * @param message The actual message as an ASCII string
+     */
     event Notified(address indexed client, string message);
+
+    /**
+     * @dev Emitted when an {AMLStatus} entry is deleted.
+     *
+     * There are two ways for the Oracle Operator to nullify an {AMLStatus}:
+     * either calling `setAMLStatus()` with null attributes, or deleting the
+     * whole {AMLStatus} entry by calling `deleteAMLStatus()` directly
+     * (emitting this event). This action deletes the whole entry, including
+     * the timestamp (which `setAMLStatus()` can't nullify).
+     *
+     * There are also two occassions on which this action can take place:
+     * - Oracle Operator invokes `deleteAMLStatus()` directly, as described
+         above, or
+     * - Client Smart Contract fetches an AML status, and the status is
+     *   subsequently removed.
+     *
+     * @param client Client smart contract whose AML status database is affected
+     * @param target The target address whose {AMLStatus} was deleted
+     */
     event AMLStatusDeleted(address indexed client, string target);
+
+    /**
+     * @dev Emitted when client smart contract ask an AML status for an
+     * address to be placed on-chain by the Oracle Operator.
+     *
+     * @param client Client smart contract asking the AML status
+     * @param maxFee How much the client smart contract is willing to pay for
+     * the status
+     * @param target The address whose AML status the Client is requesting
+     */
     event AMLStatusAsked(address indexed client, uint256 maxFee, string target);
+
+    /**
+     * @dev Emitted when the Oracle Operator places an AML status on-chain.
+     *
+     * @param client
+     * @param target
+     */
     event AMLStatusSet(address indexed client, string target);
+
+    /**
+     * @dev Emitted when client smart contract fetches an AML status
+     *
+     * @param client
+     * @param target
+     */
     event AMLStatusFetched(address indexed client, string target);
+
+    /**
+     * @dev Emitted when an account receives a donation.
+     *
+     * @param donor
+     * @param account
+     * @param amount
+     */
     event Donated(address indexed donor, address indexed account, uint256 amount);
+
+    /**
+     * @dev Emitted when an account deposit funds to itself.
+     *
+     * @param account
+     * @param amount
+     */
     event Deposited(address indexed account, uint256 amount);
+
+    /**
+     * @dev Emitted when an account withdraws its funds.
+     *
+     * @param account
+     * @param amount 
+     */
     event Withdrawn(address indexed account, uint256 amount);
 
     constructor(address admin) {
@@ -141,9 +296,10 @@ abstract contract AMLOracle is AccessControl, RecoverTokens {
 
         _balances[client] = _balances[client].sub(_getFee(status));
         _balances[_feeAccount] = _balances[_feeAccount].add(_getFee(status));
-        delete(_AMLStatuses[client][target]); //!
+        delete(_AMLStatuses[client][target]); //!, Place this to own internal function with the event?
 
         emit AMLStatusFetched(client, target);
+        emit AMLStatusDeleted(client, target);
         return (status.amlID, status.cScore, status.flags);
     }
 

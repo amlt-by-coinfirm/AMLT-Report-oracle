@@ -5,14 +5,15 @@
 pragma solidity 0.7.0; // Avoiding regressions by using the oldest safe Solidity, instead of the latest
 
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
-import "./AMLOracle.sol";
+import "./BaseAMLOracle.sol";
+import './RecoverTokens.sol';
 
-contract AMLTOracle is AMLOracle {
+contract AMLTOracle is RecoverTokens, BaseAMLOracle {
     using SafeMath for uint256; // Applicable only for uint256
 
     IERC20 public AMLToken;
 
-    constructor(address admin, IERC20 _AMLToken) AMLOracle(admin) {
+    constructor(address admin, IERC20 _AMLToken) BaseAMLOracle(admin) {
         AMLToken = _AMLToken;
     }
 

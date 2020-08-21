@@ -15,4 +15,6 @@ Design choices:
   * Return variables are named, but still we use "return;" (OpenZeppelin and new NatSpec)
   * No encryption due to technical limitations (client smart contracts should be able to decrypt it themselves)
   * Assert() strategy: at the end of the function try to get the same result, like in elementary school mathematics
-  
+  * NatSpec style combines traditional and OpenZeppelin approach
+  * ETHOracle and AMLTOracle inherit RecoverTokens separately, it's their job
+  * We combine OpenZeppelin's commenting style for non-public variables ("//") with NatSpec ("/// @")

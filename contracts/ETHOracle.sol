@@ -5,12 +5,13 @@
 pragma solidity 0.7.0; // Avoiding regressions by using the oldest safe Solidity, instead of the latest
 
 import 'openzeppelin-solidity/contracts/utils/Address.sol';
-import "./AMLOracle.sol";
+import "./BaseAMLOracle.sol";
+import './RecoverTokens.sol';
 
-contract ETHOracle is AMLOracle {
+contract ETHOracle is RecoverTokens, BaseAMLOracle {
     using Address for address payable;
 
-    constructor(address admin) AMLOracle(admin) {
+    constructor(address admin) BaseAMLOracle(admin) {
 
     }
 
