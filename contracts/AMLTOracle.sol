@@ -17,8 +17,8 @@ contract AMLTOracle is RecoverTokens, BaseAMLOracle {
         AMLToken = _AMLToken;
     }
 
-    function donateAMLT(address client, uint256 amount) external {
-        _donate(msg.sender, client, amount);
+    function donateAMLT(address account, uint256 amount) external {
+        _donate(msg.sender, account, amount);
         _transferHere(msg.sender, amount);
     }
 
