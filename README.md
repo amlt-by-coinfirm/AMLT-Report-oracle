@@ -20,3 +20,4 @@ Design choices:
   * We combine OpenZeppelin's commenting style for non-public variables ("//") with NatSpec ("/// @")
   * Terms: client / client smart contract, AML status / AMLStatus
   * external->internal(calldata) pattern
+  * Solidity version lock

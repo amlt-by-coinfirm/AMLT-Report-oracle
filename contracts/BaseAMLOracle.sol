@@ -303,13 +303,14 @@ abstract contract BaseAMLOracle is AccessControl {
     }
 
     /**
-     * @dev Setting the AML status for a specific address for a specific client
-     * as the Oracle Operator.
+     * @dev Setting/updating the AML status for a specific address for a
+     * specific client as the Oracle Operator.
      *
      * The Oracle Operator can use this to set an arbitrary AML status for
      * an arbitrary address for an arbitrary client. The client might, or might
      * not, have requested the AML status. Client might, or might not, fetch
-     * this AML status.
+     * this AML status. If an AML status is already present on-chain, the
+     * status will be updated.
      *
      * Timestamp is not checked for overflow, and this is intentionally done
      * for simplifying the code:
@@ -326,12 +327,18 @@ abstract contract BaseAMLOracle is AccessControl {
      *
      * On successful execution, {AMLStatusSet} EVM event is emitted.
      *
-     * @param client
-     * @param target
-     * @param amlID
-     * @param cScore
-     * @param flags
-     * @param fee
+     * @param client Address of the client whose AML status database will be
+     * affected
+     * @param target The address for which the {AMLStatus} entry will be
+     * created or updated
+     * @param amlID Reference provided by the Oracle Operator for off-chain
+     * integration
+     * @param cScore AML cScore provided by the Oracle Operator as a result
+     * of their AML analysis (the range being from 0 to 99)
+     * @param flags Additional flags provided (and defined) by the Oracle
+     * Operator
+     * @param fee Fee that the Client must pay during a fetch in order to
+     * receive the {AMLStatus} data
      */
     function setAMLStatus(address client, string calldata target, bytes32 amlID, uint8 cScore, uint120 flags, uint256 fee) external {
         require(hasRole(SET_AML_STATUS_ROLE, msg.sender), "AMLOracle: Caller is not allowed to set AML Statuses");
@@ -358,8 +365,10 @@ abstract contract BaseAMLOracle is AccessControl {
      *
      * On successful execution, {AMLStatusDeleted} EVM event is emitted.
      *
-     * @param client
-     * @param target
+     * @param client Address of the client whose AML status database will be
+     * affected
+     * @param target The address of the account whose {AMLStatus} entry will be
+     * deleted from the Oracle Database
      */
     function deleteAMLStatus(address client, string calldata target) external {
         require(hasRole(DELETE_AML_STATUS_ROLE, msg.sender), "AMLOracle: Caller is not allowed to delete AML Statuses");
@@ -378,12 +387,15 @@ abstract contract BaseAMLOracle is AccessControl {
      * for the Client.
      *
      * Anyone can call this function: its up to the Oracle Operator to arrange
-     * spam prevention mechanisms.
+     * spam prevention mechanisms. There are no conditions whatsoever on
+     * calling this function.
      *
      * On successful execution, {AMLStatusAsked} EVM event is emitted.
      *
-     * @param maxFee
-     * @param target
+     * @param maxFee Maximum fee the Client is willing to pay, this is not
+     * saved to the Oracle state, so the Client can later decide will they pay
+     * the fee or not, since the fee is paid during fetch.
+     * @param target An account the client would like to request AML status for
      */
     function askAMLStatus(uint256 maxFee, string calldata target) external {
         emit AMLStatusAsked(msg.sender, maxFee, target);
@@ -405,10 +417,13 @@ abstract contract BaseAMLOracle is AccessControl {
      *
      * On successful execution, {AMLStatusFetched} EVM event is emitted.
      *
-     * @param target
-     * @returns amlID
-     * @returns cScore
-     * @returns flags
+     * @param target Address whose AML status will be fetched
+     * @return amlID Reference provided by the Oracle Operator for off-chain
+     * integration
+     * @return cScore AML cScore provided by the Oracle Operator as a result
+     * of their AML analysis (the range being from 0 to 99)
+     * @return flags Additional flags provided (and defined) by the Oracle
+     * Operator
      */
     function fetchAMLStatus(string calldata target) external returns (bytes32 amlID, uint8 cScore, uint120 flags) {
         return _fetchAMLStatus(msg.sender, target);
@@ -422,10 +437,13 @@ abstract contract BaseAMLOracle is AccessControl {
      * information to be secret, and its possible that the Client is consisting
      * of multiple smart contracts.
      *
-     * @param client
-     * @param target
-     * @returns timestamp
-     * @returns fee
+     * @param client Client in whose database the desired {AMLStatus} entry
+     * resides
+     * @param target Address of the desired {AMLStatus} entry
+     * @return timestamp Timestamp when the {AMLStatus} entry was created, or
+     * updated
+     * @return fee The amount the Client must pay during fetch in order to
+     * get the AML status data
      */
     function getAMLStatusMetadata(address client, string calldata target) external view returns (uint256 timestamp, uint256 fee) {
         AMLStatus memory status = _getAMLStatusCopy(client, target);
@@ -441,7 +459,7 @@ abstract contract BaseAMLOracle is AccessControl {
      *
      * This is public so it can be used as-is in derived contracts also.
      *
-     * @returns defaultFee Default fee for an AML status query
+     * @return defaultFee Default fee for an AML status query
      */
     function getDefaultFee() public view returns (uint256 defaultFee) {
         return _defaultFee;
@@ -455,7 +473,7 @@ abstract contract BaseAMLOracle is AccessControl {
      *
      * This is public so it can be used as-is in derived contracts also.
      *
-     * @returns feeAccount Account where the fees are paid
+     * @return feeAccount Account where the fees are paid
      */
     function getFeeAccount() public view returns (address feeAccount) {
         return _feeAccount;
@@ -471,7 +489,7 @@ abstract contract BaseAMLOracle is AccessControl {
      * This is public so it can be used as-is in derived contracts also.
      *
      * @param account Which account's balance is requested
-     * @returns balance Balance for the account
+     * @return balance Balance for the account
      */
     function balanceOf(address account) public view returns (uint256 balance) {
         return _balances[account];

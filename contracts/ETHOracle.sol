@@ -8,9 +8,17 @@ import 'openzeppelin-solidity/contracts/utils/Address.sol';
 import "./BaseAMLOracle.sol";
 import './RecoverTokens.sol';
 
+/**
+ * @title ETHOracle - AML Oracle with Ether payments, inherits {BaseAMLOracle}
+ * @author Ville Sundell <development@solarius.fi>
+ * @dev This AML Oracle works with Ether, and is based on {BaseAMLOracle}.
+ */
 contract ETHOracle is RecoverTokens, BaseAMLOracle {
     using Address for address payable;
 
+    /**
+     * @dev Empty constructor, only invoking the {BaseAMLOracle-constructor}.
+     */
     constructor(address admin) BaseAMLOracle(admin) {
 
     }
