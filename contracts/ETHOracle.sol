@@ -4,22 +4,23 @@
 // https://consensys.github.io/smart-contract-best-practices/recommendations/#lock-pragmas-to-specific-compiler-version
 pragma solidity 0.7.0; // Avoiding regressions by using the oldest safe Solidity, instead of the latest
 
-import 'openzeppelin-solidity/contracts/utils/Address.sol';
+import "openzeppelin-solidity/contracts/utils/Address.sol";
 import "./BaseAMLOracle.sol";
-import './RecoverTokens.sol';
+import "./IETHOracle.sol";
+import "./RecoverTokens.sol";
 
 /**
  * @title ETHOracle - AML Oracle with Ether payments, inherits {BaseAMLOracle}
  * @author Ville Sundell <development@solarius.fi>
  * @dev This AML Oracle works with Ether, and is based on {BaseAMLOracle}.
  */
-contract ETHOracle is RecoverTokens, BaseAMLOracle {
+contract ETHOracle is RecoverTokens, BaseAMLOracle, IETHOracle {
     using Address for address payable;
 
     /**
      * @dev Empty constructor, only invoking the {BaseAMLOracle-constructor}.
      */
-    constructor(address admin) BaseAMLOracle(admin) {
+    constructor(address admin, uint256 defaultFee) BaseAMLOracle(admin, defaultFee) {
 
     }
 
@@ -33,31 +34,21 @@ contract ETHOracle is RecoverTokens, BaseAMLOracle {
     }
 
     /**
-     * @dev Donating Ether to an account internally.
-     *
-     * On successful execution, {Donated} EVM event is emitted.
-     *
-     * @param account Account to which account to donate to
+     * @dev See {IETHOracle-donateETH}.
      */
     function donateETH(address account) external payable {
         _donate(msg.sender, account, msg.value);
     }
 
     /**
-     * @dev Depositing Ether internally for the sender.
-     *
-     * On successful execution, {Deposited} EVM event is emitted.
+     * @dev See {IETHOracle-depositETH}.
      */
     function depositETH() external payable {
         _deposit(msg.sender, msg.value);
     }
 
     /**
-     * @dev Withdraw Ether from sender's internal balance.
-     *
-     * On successful execution, {Withdrawn} EVM event is emitted.
-     *
-     * @param amount Amount of ether to be withdrawn
+     * @dev See {IETHOracle-withdrawETH}.
      */
     function withdrawETH(uint256 amount) external {
         _withdraw(msg.sender, amount);
@@ -65,13 +56,8 @@ contract ETHOracle is RecoverTokens, BaseAMLOracle {
     }
 
     /**
-     * @dev Fetch an {AMLStatus} as a Client and pay the fee with the supplied
-     * ether.
-     *
-     * See {fetchAMLStatus} for details.
-     *
-     * On successful execution, {AMLStatusFetched} EVM event is emitted.
-     *
+     * @dev See {IETHOracle-fetchAMLStatusForETH} and
+     * {IBaseAMLOracle-fetchAMLStatus}.
      */
     function fetchAMLStatusForETH(string calldata target) external payable returns (bytes32 amlID, uint8 cScore, uint120 flags) {
         _deposit(msg.sender, msg.value);

@@ -6,7 +6,8 @@ pragma solidity 0.7.0; // Avoiding regressions by using the oldest safe Solidity
 
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "./BaseAMLOracle.sol";
-import './RecoverTokens.sol';
+import "./IAMLTOracle.sol";
+import "./RecoverTokens.sol";
 
 /**
  * @title AMLTOracle - AML Oracle with AMLT token payments, inherits
@@ -19,31 +20,15 @@ contract AMLTOracle is RecoverTokens, BaseAMLOracle {
     using SafeMath for uint256; // Applicable only for uint256
 
     /**
-     * @dev AMLT token contract address resides here. It's not hardcoded
-     * so the same code could be run on many different networks (mainly for
-     * testing purposes).
-     */
-    IERC20 public AMLToken;
-
-    /**
      * @dev This constructor only sets the {AMLToken}, other initialization
      * tasks are done in {BaseAMLOracle}'s constructor.
      */
-    constructor(address admin, IERC20 _AMLToken) BaseAMLOracle(admin) {
+    constructor(address admin, uint256 defaultFee, IERC20 _AMLToken) BaseAMLOracle(admin, defaultFee) {
         AMLToken = _AMLToken;
     }
 
     /**
-     * @dev Donating AMLT to an account internally.
-     *
-     * Before calling this function, the account must have called {AMLToken}'s
-     * {IERC20-approve} approving this Oracle to access their tokens.
-     *
-     * On successful execution, {Donated} EVM event is emitted.
-     *
-     * @param account Client for which the tokens will be donated to internally
-     * @param amount Amount of tokens to be transferred from `account` to the
-     * Oracle
+     * @dev See {IAMLTOracle-donateAMLT}.
      */
     function donateAMLT(address account, uint256 amount) external {
         _donate(msg.sender, account, amount);
@@ -51,18 +36,7 @@ contract AMLTOracle is RecoverTokens, BaseAMLOracle {
     }
 
     /**
-     * @dev Deposit AMLT to an account internally.
-     *
-     * This function transfers `amount` of tokens from the caller to caller's
-     * internal balance for paying fees in the future.
-     *
-     * Before calling this function, the account must have called {AMLToken}'s
-     * {IERC20-approve} approving this Oracle to access their tokens.
-     *
-     * On successful execution, {Deposited} EVM event is emitted.
-     *
-     * @param amount Amount of tokens to be transferred from `account` to the
-     * Oracle
+     * @dev See {IAMLTOracle-depositAMLT}.
      */
     function depositAMLT(uint256 amount) external {
         _deposit(msg.sender, amount);
@@ -70,15 +44,7 @@ contract AMLTOracle is RecoverTokens, BaseAMLOracle {
     }
 
     /**
-     * @dev Withdraw AMLT tokens from caller's internal balance.
-     *
-     * Will withdraw `amount` of AMLT tokens from caller's internal balance
-     * to the caller themselves using {IERC20-transfer}.
-     *
-     * On successful execution, {Withdrawn} EVM event is emitted.
-     *
-     * @param amount Amount of tokens to withdraw from caller's internal
-     * balance
+     * @dev See {IAMLTOracle-withdrawAMLT}.
      */
     function withdrawAMLT(uint256 amount) external {
         _withdraw(msg.sender, amount);
@@ -91,14 +57,8 @@ contract AMLTOracle is RecoverTokens, BaseAMLOracle {
     }
 
     /**
-     * @dev Fetch an {AMLStatus} as a Client and pay the fee with the supplied
-     * ether.
-     *
-     * See {fetchAMLStatus} for details.
-     *
-     * On successful execution, {AMLStatusFetched} EVM event is emitted.
-     *
-     *
+     * @dev See {IAMLTOracle-fetchAMLStatusForAMLT} and
+     * {IBaseAMLOracle-fetchAMLStatus}.
      */
     function fetchAMLStatusForAMLT(string calldata target) external returns (bytes32 amlID, uint8 cScore, uint120 flags) {
         AMLStatus memory status = _getAMLStatusCopy(msg.sender, target);

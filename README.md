@@ -21,3 +21,4 @@ Design choices:
   * Terms: client / client smart contract, AML status / AMLStatus
   * external->internal(calldata) pattern
   * Solidity version lock
+  * No formal verification needed
