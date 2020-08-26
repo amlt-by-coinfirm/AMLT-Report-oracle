@@ -2,7 +2,7 @@
 
 // We lock the Solidity version, per:
 // https://consensys.github.io/smart-contract-best-practices/recommendations/#lock-pragmas-to-specific-compiler-version
-pragma solidity 0.7.0; // Avoiding regressions by using the oldest safe Solidity, instead of the latest
+pragma solidity 0.7.0; // See README.md for our Solidity version strategy
 
 import "openzeppelin-solidity/contracts/utils/Address.sol";
 import "./BaseAMLOracle.sol";
@@ -36,21 +36,21 @@ contract ETHOracle is RecoverTokens, BaseAMLOracle, IETHOracle {
     /**
      * @dev See {IETHOracle-donateETH}.
      */
-    function donateETH(address account) external payable {
+    function donateETH(address account) external override payable {
         _donate(msg.sender, account, msg.value);
     }
 
     /**
      * @dev See {IETHOracle-depositETH}.
      */
-    function depositETH() external payable {
+    function depositETH() external override payable {
         _deposit(msg.sender, msg.value);
     }
 
     /**
      * @dev See {IETHOracle-withdrawETH}.
      */
-    function withdrawETH(uint256 amount) external {
+    function withdrawETH(uint256 amount) external override {
         _withdraw(msg.sender, amount);
         msg.sender.sendValue(amount);
     }
@@ -58,13 +58,15 @@ contract ETHOracle is RecoverTokens, BaseAMLOracle, IETHOracle {
     /**
      * @dev See {IETHOracle-fetchAMLStatusForETH} and
      * {IBaseAMLOracle-fetchAMLStatus}.
+     *
+     * The client can pay part of the fee from its balance, if desired so.
      */
-    function fetchAMLStatusForETH(string calldata target) external payable returns (bytes32 amlID, uint8 cScore, uint120 flags) {
+    function fetchAMLStatusForETH(string calldata target) external override payable returns (bytes32 amlID, uint8 cScore, uint120 flags) {
         _deposit(msg.sender, msg.value);
         return _fetchAMLStatus(msg.sender, target);
     }
 
-    function _getTotalBalance() internal virtual override view returns (uint256 balance) {
+    function _getTotalBalance() internal virtual view override returns (uint256 balance) {
         return address(this).balance;
     }
 }

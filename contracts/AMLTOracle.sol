@@ -2,7 +2,7 @@
 
 // We lock the Solidity version, per:
 // https://consensys.github.io/smart-contract-best-practices/recommendations/#lock-pragmas-to-specific-compiler-version
-pragma solidity 0.7.0; // Avoiding regressions by using the oldest safe Solidity, instead of the latest
+pragma solidity 0.7.0; // See README.md for our Solidity version strategy
 
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "./BaseAMLOracle.sol";
@@ -18,6 +18,13 @@ import "./RecoverTokens.sol";
  */
 contract AMLTOracle is RecoverTokens, BaseAMLOracle {
     using SafeMath for uint256; // Applicable only for uint256
+
+    /**
+     * @dev AMLT token contract address resides here. It's not hardcoded
+     * so the same code could be run on many different networks (mainly for
+     * testing purposes).
+     */
+    IERC20 public AMLToken;
 
     /**
      * @dev This constructor only sets the {AMLToken}, other initialization
@@ -59,6 +66,10 @@ contract AMLTOracle is RecoverTokens, BaseAMLOracle {
     /**
      * @dev See {IAMLTOracle-fetchAMLStatusForAMLT} and
      * {IBaseAMLOracle-fetchAMLStatus}.
+     *
+     * This is an auxiliary function provided for convenience, and for building
+     * innovative workflows. fetchAMLStatus() is the primary way to fetch
+     * AML statuses. This is relatively heavy weight process.
      */
     function fetchAMLStatusForAMLT(string calldata target) external returns (bytes32 amlID, uint8 cScore, uint120 flags) {
         AMLStatus memory status = _getAMLStatusCopy(msg.sender, target);
@@ -89,8 +100,8 @@ contract AMLTOracle is RecoverTokens, BaseAMLOracle {
     }
 
     function _getTotalBalance() internal virtual override view returns (uint256 balance) {
-        try AMLToken.balanceOf(address(this)) returns (uint256 balance) {
-            return balance;
+        try AMLToken.balanceOf(address(this)) returns (uint256 totalBalance) {
+            return totalBalance;
         } catch {
             revert("AMLTOracle: could not fetch total balance"); // Unique error message
         }

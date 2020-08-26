@@ -6,13 +6,6 @@ import "./IBaseAMLOracle.sol";
 
 interface IAMLTOracle is IBaseAMLOracle {
     /**
-     * @dev AMLT token contract address resides here. It's not hardcoded
-     * so the same code could be run on many different networks (mainly for
-     * testing purposes).
-     */
-    IERC20 public AMLToken;
-
-    /**
      * @dev Donating AMLT to an account internally.
      *
      * Before calling this function, the account must have called {AMLToken}'s

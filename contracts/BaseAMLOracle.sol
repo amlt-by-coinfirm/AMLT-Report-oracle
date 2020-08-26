@@ -107,8 +107,8 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
     /**
      * @dev See {IBaseAMLOracle-setDefaultFee}.
      */
-    function setDefaultFee(uint256 defaultFee_) external {
-        require(hasRole(SET_DEFAULT_FEE_ROLE, msg.sender), "AMLOracle: Caller is not allowed to set the default fee");
+    function setDefaultFee(uint256 defaultFee_) external override {
+        require(hasRole(SET_DEFAULT_FEE_ROLE, msg.sender), "BaseAMLOracle: Caller is not allowed to set the default fee");
 
         emit DefaultFeeSet(_defaultFee, defaultFee_); // Omitting setter for consistency
 
@@ -119,8 +119,8 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
     /**
      * @dev See {IBaseAMLOracle-setFeeAccount}.
      */
-    function setFeeAccount(address feeAccount_) external {
-        require(hasRole(SET_FEE_ACCOUNT_ROLE, msg.sender), "AMLOracle: Caller is not allowed to set the fee account");
+    function setFeeAccount(address feeAccount_) external override {
+        require(hasRole(SET_FEE_ACCOUNT_ROLE, msg.sender), "BaseAMLOracle: Caller is not allowed to set the fee account");
 
         emit FeeAccountSet(_feeAccount, feeAccount_); // Omitting setter for consistency
 
@@ -131,8 +131,8 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
     /**
      * @dev See {IBaseAMLOracle-notify}.
      */
-    function notify(address client, string calldata message) external {
-        require(hasRole(NOTIFY_ROLE, msg.sender), "AMLOracle: Caller is not allowed to notify the clients");
+    function notify(address client, string calldata message) override external {
+        require(hasRole(NOTIFY_ROLE, msg.sender), "BaseAMLOracle: Caller is not allowed to notify the clients");
 
         emit Notified(client, message);
     }
@@ -140,9 +140,9 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
     /**
      * @dev See {IBaseAMLOracle-setAMLStatus}.
      */
-    function setAMLStatus(address client, string calldata target, bytes32 amlID, uint8 cScore, uint120 flags, uint256 fee) external {
-        require(hasRole(SET_AML_STATUS_ROLE, msg.sender), "AMLOracle: Caller is not allowed to set AML Statuses");
-        require(cScore < 100, "AMLOracle: The cScore must be between 0 and 99");
+    function setAMLStatus(address client, string calldata target, bytes32 amlID, uint8 cScore, uint120 flags, uint256 fee) external override {
+        require(hasRole(SET_AML_STATUS_ROLE, msg.sender), "BaseAMLOracle: Caller is not allowed to set AML Statuses");
+        require(cScore < 100, "BaseAMLOracle: The cScore must be between 0 and 99");
         AMLStatus memory status;
 
         status = AMLStatus(amlID, cScore, flags, uint128(block.timestamp), fee); // The timestamp is not critical, and will overflow in ~10 nonillion (US) years (10,783,118,943,836,478,994,022,445,749,252)
@@ -152,8 +152,8 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
     /**
      * @dev See {IBaseAMLOracle-deleteAMLStatus}.
      */
-    function deleteAMLStatus(address client, string calldata target) external {
-        require(hasRole(DELETE_AML_STATUS_ROLE, msg.sender), "AMLOracle: Caller is not allowed to delete AML Statuses");
+    function deleteAMLStatus(address client, string calldata target) external override {
+        require(hasRole(DELETE_AML_STATUS_ROLE, msg.sender), "BaseAMLOracle: Caller is not allowed to delete AML Statuses");
 
         _deleteAMLStatus(client, target);
     }
@@ -161,21 +161,21 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
     /**
      * @dev See {IBaseAMLOracle-askAMLStatus}.
      */
-    function askAMLStatus(uint256 maxFee, string calldata target) external {
+    function askAMLStatus(uint256 maxFee, string calldata target) external override {
         emit AMLStatusAsked(msg.sender, maxFee, target);
     }
 
     /**
      * @dev See {IBaseAMLOracle-fetchAMLStatus}.
      */
-    function fetchAMLStatus(string calldata target) external returns (bytes32 amlID, uint8 cScore, uint120 flags) {
+    function fetchAMLStatus(string calldata target) external override returns (bytes32 amlID, uint8 cScore, uint120 flags) {
         return _fetchAMLStatus(msg.sender, target);
     }
 
     /**
      * @dev {IBaseAMLOracle-getAMLStatusMetadata}.
      */
-    function getAMLStatusMetadata(address client, string calldata target) external view returns (uint256 timestamp, uint256 fee) {
+    function getAMLStatusMetadata(address client, string calldata target) external view override returns (uint256 timestamp, uint256 fee) {
         AMLStatus memory status = _getAMLStatusCopy(client, target);
 
         return (status.timestamp, _getFee(status));
@@ -184,31 +184,35 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
     /**
      * @dev See {IBaseAMLOracle-getDefaultFee}.
      */
-    function getDefaultFee() public view returns (uint256 defaultFee) {
+    function getDefaultFee() public view override returns (uint256 defaultFee) {
         return _defaultFee;
     }
 
     /**
      * @dev See {IBaseAMLOracle-getFeeAccount}.
      */
-    function getFeeAccount() public view returns (address feeAccount) {
+    function getFeeAccount() public view override returns (address feeAccount) {
         return _feeAccount;
     }
 
     /**
      * @dev See {IBaseAMLOracle-balanceOf}.
      */
-    function balanceOf(address account) public view returns (uint256 balance) {
+    function balanceOf(address account) public view override returns (uint256 balance) {
         return _balances[account];
     }
 
     function _setAMLStatus(address client, string calldata target, AMLStatus memory status) internal {
+        require(client != address(0), "BaseAMLOracle: client must not be 0x0");
+        // Check how much gas target length check would require
+
         _AMLStatuses[client][target] = status;
 
         emit AMLStatusSet(client, target);
     }
 
     function _deleteAMLStatus(address client, string calldata target) internal {
+        require(client != address(0), "BaseAMLOracle: client must not be 0x0");
         delete(_AMLStatuses[client][target]);
 
         emit AMLStatusDeleted(client, target);
@@ -216,7 +220,7 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
 
     function _fetchAMLStatus(address client, string calldata target) internal returns (bytes32 amlID, uint8 cScore, uint120 flags) {
         AMLStatus memory status = _getAMLStatusCopy(client, target);
-        require(status.timestamp > 0, "No such AML Status.");
+        require(status.timestamp > 0, "BaseAMLOracle: No such AML Status");
 
         _balances[client] = _balances[client].sub(_getFee(status));
         _balances[_feeAccount] = _balances[_feeAccount].add(_getFee(status));
@@ -236,6 +240,9 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
     }
 
     function _deposit(address account, uint256 amount) internal {
+        assert(account != address(0)); // Should never be 0x0
+        require(amount > 0, "BaseAMLOracle: amount to deposit must be greater than 0");
+
         _balances[account] = _balances[account].add(amount);
         _totalDeposits = _totalDeposits.add(amount);
 
@@ -244,6 +251,9 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
     }
 
     function _withdraw(address account, uint256 amount) internal {
+        assert(account != address(0)); // Should never be 0x0
+        require(amount > 0, "BaseAMLOracle: amount to withdraw must be greater than 0");
+
         _balances[account] = _balances[account].sub(amount);
         _totalDeposits = _totalDeposits.sub(amount);
 
@@ -259,6 +269,9 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
     }
 
     function _getAMLStatusCopy(address client, string calldata target) internal view returns (AMLStatus memory status) {
+        require(client != address(0), "BaseAMLOracle: client must not be 0x0");
+        //require(target.len > 0, "BaseAMLOracle: target must not be a zero length string");
+
         return _AMLStatuses[client][target];
     }
 

@@ -21,7 +21,7 @@ contract("ETHOracle", async accounts => {
     it("Set defaultFee", async () => {
       let tx = await ETHOracle.setDefaultFee(100);
       truffleAssert.eventEmitted(tx, 'DefaultFeeSet', (ev) => {
-        return ev.oldDefaultFee == 0 && ev.newDefaultFee == 100;
+        return ev.oldDefaultFee == 123 && ev.newDefaultFee == 100;
       });
 
       let result = await ETHOracle.getDefaultFee.call();

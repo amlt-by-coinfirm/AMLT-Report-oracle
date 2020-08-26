@@ -142,14 +142,7 @@ interface IBaseAMLOracle {
      *
      * @param defaultFee_ The new default fee
      */
-    function setDefaultFee(uint256 defaultFee_) external {
-        require(hasRole(SET_DEFAULT_FEE_ROLE, msg.sender), "AMLOracle: Caller is not allowed to set the default fee");
-
-        emit DefaultFeeSet(_defaultFee, defaultFee_); // Omitting setter for consistency
-
-        _defaultFee = defaultFee_;
-        assert(_defaultFee == defaultFee_);
-    }
+    function setDefaultFee(uint256 defaultFee_) external;
 
     /**
      * @dev Setting the account where we pay the fees for each AML status
@@ -166,14 +159,7 @@ interface IBaseAMLOracle {
      *
      * @param feeAccount_ New fee account
      */
-    function setFeeAccount(address feeAccount_) external {
-        require(hasRole(SET_FEE_ACCOUNT_ROLE, msg.sender), "AMLOracle: Caller is not allowed to set the fee account");
-
-        emit FeeAccountSet(_feeAccount, feeAccount_); // Omitting setter for consistency
-
-        _feeAccount = feeAccount_;
-        assert(_feeAccount == feeAccount_);
-    }
+    function setFeeAccount(address feeAccount_) external;
 
     /**
      * @dev Notifying a client via an EVM event with a free form ASCII string
@@ -339,7 +325,7 @@ interface IBaseAMLOracle {
      *
      * @return defaultFee Default fee for an AML status query
      */
-    function getDefaultFee() public view returns (uint256 defaultFee);
+    function getDefaultFee() external view returns (uint256 defaultFee);
 
     /**
      * @dev Getter for private variable _feeAccount.
@@ -351,7 +337,7 @@ interface IBaseAMLOracle {
      *
      * @return feeAccount Account where the fees are paid
      */
-    function getFeeAccount() public view returns (address feeAccount);
+    function getFeeAccount() external view returns (address feeAccount);
 
     /**
      * @dev ERC-20 compatible getter for private _balances mapping containing
@@ -365,5 +351,5 @@ interface IBaseAMLOracle {
      * @param account Which account's balance is requested
      * @return balance Balance for the account
      */
-    function balanceOf(address account) public view returns (uint256 balance);
+    function balanceOf(address account) external view returns (uint256 balance);
 }

@@ -22,3 +22,6 @@ Design choices:
   * external->internal(calldata) pattern
   * Solidity version lock
   * No formal verification needed
+  * Audits should cover contracts/*.sol only
+  * Many require()s are for client's/user's convenience
+  * Terminology: client/user, clinet/account, owner/operator/admin, etc.

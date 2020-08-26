@@ -10,12 +10,12 @@ contract("AMLTOracle", async accounts => {
 
 
   context('Role Based Access Control (RBAC)', () => {
-    it("Check that 'RECOVER_ROLE' is set correctly", async () => {
-      let recover = await AMLTOracle.getRoleMember(web3.utils.soliditySha3('RECOVER_ROLE'), 0);
+    it("Check that 'RECOVER_TOKENS_ROLE' is set correctly", async () => {
+      let recover = await AMLTOracle.getRoleMember(web3.utils.soliditySha3('recoverTokens()'), 0);
       assert.equal(
         recover.valueOf(),
         accounts[0],
-        "Incorrect RECOVER_ROLE address!");
+        "Incorrect RECOVER_TOKENS_ROLE address!");
     });
 
     it("Check that 'ADMIN_ROLE' is set correctly", async () => {
@@ -27,9 +27,9 @@ contract("AMLTOracle", async accounts => {
     });
 
     it("Remove and restore 'RECOVER_ROLE'", async () => {
-      await AMLTOracle.revokeRole(web3.utils.soliditySha3('RECOVER_ROLE'), accounts[0]);
-      await truffleAssert.reverts(AMLTOracle.recoverTokens(TestToken1Contract.address), "Recoverable: Caller is not allowed to recover tokens");
-      await AMLTOracle.grantRole(web3.utils.soliditySha3('RECOVER_ROLE'), accounts[0]);
+      await AMLTOracle.revokeRole(web3.utils.soliditySha3('recoverTokens()'), accounts[0]);
+      await truffleAssert.reverts(AMLTOracle.recoverTokens(TestToken1Contract.address), "RecoverTokens: Caller is not allowed to recover tokens");
+      await AMLTOracle.grantRole(web3.utils.soliditySha3('recoverTokens()'), accounts[0]);
       await AMLTOracle.recoverTokens(TestToken1Contract.address);
     });
   });
