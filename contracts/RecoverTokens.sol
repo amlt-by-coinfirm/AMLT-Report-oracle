@@ -23,7 +23,7 @@ contract RecoverTokens is AccessControl {
     }
 
     function recoverTokens(IERC20 token) public {
-        require(hasRole(RECOVER_TOKENS_ROLE, msg.sender), "RecoverTokens: Caller is not allowed to recover tokens");
+        require(hasRole(RECOVER_TOKENS_ROLE, msg.sender), "RecoverTokens: caller is not allowed to recover tokens");
 
         uint256 amount = _tokensToBeRecovered(token);
 

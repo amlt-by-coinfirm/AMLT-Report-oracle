@@ -106,9 +106,12 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
 
     /**
      * @dev See {IBaseAMLOracle-setDefaultFee}.
+     *
+     * Zero fees are intentionally supported as the default fee.
+     * (Fee per query can't be 0, though.)
      */
     function setDefaultFee(uint256 defaultFee_) external override {
-        require(hasRole(SET_DEFAULT_FEE_ROLE, msg.sender), "BaseAMLOracle: Caller is not allowed to set the default fee");
+        require(hasRole(SET_DEFAULT_FEE_ROLE, msg.sender), "BaseAMLOracle: caller is not allowed to set the default fee");
 
         emit DefaultFeeSet(_defaultFee, defaultFee_); // Omitting setter for consistency
 
@@ -120,7 +123,8 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
      * @dev See {IBaseAMLOracle-setFeeAccount}.
      */
     function setFeeAccount(address feeAccount_) external override {
-        require(hasRole(SET_FEE_ACCOUNT_ROLE, msg.sender), "BaseAMLOracle: Caller is not allowed to set the fee account");
+        require(hasRole(SET_FEE_ACCOUNT_ROLE, msg.sender), "BaseAMLOracle: caller is not allowed to set the fee account");
+        require(feeAccount_ != address(0), "BaseAMLOracle: the fee account must not be 0x0");
 
         emit FeeAccountSet(_feeAccount, feeAccount_); // Omitting setter for consistency
 
@@ -132,7 +136,8 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
      * @dev See {IBaseAMLOracle-notify}.
      */
     function notify(address client, string calldata message) override external {
-        require(hasRole(NOTIFY_ROLE, msg.sender), "BaseAMLOracle: Caller is not allowed to notify the clients");
+        require(hasRole(NOTIFY_ROLE, msg.sender), "BaseAMLOracle: caller is not allowed to notify the clients");
+        require(client != address(0), "BaseAMLOracle: client must not be 0x0");
 
         emit Notified(client, message);
     }
@@ -141,7 +146,7 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
      * @dev See {IBaseAMLOracle-setAMLStatus}.
      */
     function setAMLStatus(address client, string calldata target, bytes32 amlID, uint8 cScore, uint120 flags, uint256 fee) external override {
-        require(hasRole(SET_AML_STATUS_ROLE, msg.sender), "BaseAMLOracle: Caller is not allowed to set AML Statuses");
+        require(hasRole(SET_AML_STATUS_ROLE, msg.sender), "BaseAMLOracle: caller is not allowed to set AML statuses");
         require(cScore < 100, "BaseAMLOracle: The cScore must be between 0 and 99");
         AMLStatus memory status;
 
@@ -153,7 +158,7 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
      * @dev See {IBaseAMLOracle-deleteAMLStatus}.
      */
     function deleteAMLStatus(address client, string calldata target) external override {
-        require(hasRole(DELETE_AML_STATUS_ROLE, msg.sender), "BaseAMLOracle: Caller is not allowed to delete AML Statuses");
+        require(hasRole(DELETE_AML_STATUS_ROLE, msg.sender), "BaseAMLOracle: caller is not allowed to delete AML statuses");
 
         _deleteAMLStatus(client, target);
     }
@@ -203,7 +208,7 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
     }
 
     function _setAMLStatus(address client, string calldata target, AMLStatus memory status) internal {
-        require(client != address(0), "BaseAMLOracle: client must not be 0x0");
+        require(client != address(0), "BaseAMLOracle: cannot set AML status for 0x0");
         // Check how much gas target length check would require
 
         _AMLStatuses[client][target] = status;
@@ -212,7 +217,7 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
     }
 
     function _deleteAMLStatus(address client, string calldata target) internal {
-        require(client != address(0), "BaseAMLOracle: client must not be 0x0");
+        require(client != address(0), "BaseAMLOracle: cannot delete AML status for 0x0");
         delete(_AMLStatuses[client][target]);
 
         emit AMLStatusDeleted(client, target);

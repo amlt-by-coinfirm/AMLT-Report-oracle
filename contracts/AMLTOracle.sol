@@ -15,6 +15,10 @@ import "./RecoverTokens.sol";
  * @author Ville Sundell <development@solarius.fi>
  * @dev This AML Oracle works with AMLT tokens, and is based on
  * {BaseAMLOracle}.
+ *
+ * Despite we work with trusted contract only {AMLToken}, we follow
+ * Checks-Effects-Interactions pattern as a good practice, and to be
+ * future-proof.
  */
 contract AMLTOracle is RecoverTokens, BaseAMLOracle {
     using SafeMath for uint256; // Applicable only for uint256

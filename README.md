@@ -23,5 +23,5 @@ Design choices:
   * Solidity version lock
   * No formal verification needed
   * Audits should cover contracts/*.sol only
-  * Many require()s are for client's/user's convenience
+  * Many require()s are for client's/user's convenience. Also default values such as 0 are handled somewhat, helping troubleshooting
   * Terminology: client/user, clinet/account, owner/operator/admin, etc.
