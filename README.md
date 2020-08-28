@@ -25,3 +25,6 @@ Design choices:
   * Audits should cover contracts/*.sol only
   * Many require()s are for client's/user's convenience. Also default values such as 0 are handled somewhat, helping troubleshooting
   * Terminology: client/user, clinet/account, owner/operator/admin, etc.
+  * @notice is used unconventionally
+  * string length (target) not checked because of high gas usage
+  * Formal verification not (yet) supported: single developer project would not benefit much

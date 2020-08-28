@@ -11,6 +11,9 @@ interface IBaseAMLOracle {
      * forensics is needed, the event is linked to the transaction which can be
      * used to determine the setter.
      *
+     * Zero fees are intentionally supported as the default fee.
+     * (Fee per query can't be 0, though.)
+     *
      * @param oldDefaultFee What was the default fee before this event was
      * emitted
      * @param newDefaultFee What is the default fee after this event  was
@@ -314,6 +317,43 @@ interface IBaseAMLOracle {
      * get the AML status data
      */
     function getAMLStatusMetadata(address client, string calldata target) external view returns (uint256 timestamp, uint256 fee);
+
+    /**
+     * @dev Client can query the timestamp only, if so desired.
+     *
+     * @param client Client smart contract whose AML status database is used
+     * for this query
+     * @param target The target address whose {AMLStatus} timestamp was
+     * requested
+     * @return timestamp Timestamp when the {AMLStatus} entry was created or
+     * updated, 0 if such an entry does not exists
+     */
+    function getAMLStatusTimestamp(address client, string calldata target) external view returns (uint256 timestamp);
+
+    /**
+     * @notice {getAMLStatusMetadata} is the preferred way to access the fee
+     * (and timestamp)! If you are using this function, please read this part
+     * of the documentation carefully!
+     *
+     * @dev This function is provided only for client smart contract's
+     * convenience, as a way to build alternative processes, if desired so.
+     *
+     * If you are using this function, please keep in mind that the fee can be
+     * 0 in two occassions:
+     * - there is no such {AMLStatus} entry, or
+     * - default fee is used instead of per query fee.
+     *
+     * {getAMLStatusMetadata} is the preferred way to access both, fee and
+     * status, taking care of the edge cases described above.
+     *
+     * @param client Client smart contract whose AML status database is used
+     * for this query
+     * @param target The target address whose {AMLStatus} timestamp was
+     * requested
+     * @return fee The fee, if set for the {AMLStatus} entry, 0 if non-existent
+     * or default fee is used
+     */
+    function getAMLStatusFee(address client, string calldata target) external view returns (uint256 fee);
 
     /**
      * @dev Getter for private variable _defaultFee.

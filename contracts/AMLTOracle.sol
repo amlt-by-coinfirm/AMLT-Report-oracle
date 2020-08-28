@@ -89,6 +89,7 @@ contract AMLTOracle is RecoverTokens, BaseAMLOracle {
 
     function _tokensToBeRecovered(IERC20 token) internal view override returns (uint256 amount) {
         if (address(token) == address(AMLToken)) {
+            // assert() here?
             return _getTotalBalance().sub(_getTotalDeposits());
         } else {
             return _getTokenBalance(token);

@@ -106,9 +106,6 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
 
     /**
      * @dev See {IBaseAMLOracle-setDefaultFee}.
-     *
-     * Zero fees are intentionally supported as the default fee.
-     * (Fee per query can't be 0, though.)
      */
     function setDefaultFee(uint256 defaultFee_) external override {
         require(hasRole(SET_DEFAULT_FEE_ROLE, msg.sender), "BaseAMLOracle: caller is not allowed to set the default fee");
@@ -184,6 +181,24 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
         AMLStatus memory status = _getAMLStatusCopy(client, target);
 
         return (status.timestamp, _getFee(status));
+    }
+
+    /**
+     * @dev See {IBaseAMLOracle-getAMLStatusTimestamp}.
+     */
+    function getAMLStatusTimestamp(address client, string calldata target) external override view returns (uint256 timestamp) {
+        return _AMLStatuses[client][target].timestamp;
+    }
+
+    /**
+     * @notice {getAMLStatusMetadata} is the preferred way to access the fee
+     * (and timestamp)! If you are using this function, please read this part
+     * of the documentation carefully!
+     *
+     * @dev See {IBaseAMLOracle-getAMLStatusFee}.
+     */
+    function getAMLStatusFee(address client, string calldata target) external view override returns (uint256 fee) {
+        return _AMLStatuses[client][target].fee;
     }
 
     /**
