@@ -26,9 +26,9 @@ contract("AMLTOracle", async accounts => {
         "Incorrect ADMIN_ROLE address!");
     });
 
-    it("Remove and restore 'RECOVER_ROLE'", async () => {
+    it("Remove and restore 'RECOVER_TOKENS_ROLE'", async () => {
       await AMLTOracle.revokeRole(web3.utils.soliditySha3('recoverTokens()'), accounts[0]);
-      await truffleAssert.reverts(AMLTOracle.recoverTokens(TestToken1Contract.address), "RecoverTokens: Caller is not allowed to recover tokens");
+      await truffleAssert.reverts(AMLTOracle.recoverTokens(TestToken1Contract.address), "RecoverTokens: caller is not allowed to recover tokens");
       await AMLTOracle.grantRole(web3.utils.soliditySha3('recoverTokens()'), accounts[0]);
       await AMLTOracle.recoverTokens(TestToken1Contract.address);
     });

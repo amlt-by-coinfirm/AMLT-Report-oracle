@@ -203,6 +203,8 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
      * @dev See {IBaseAMLOracle-getAMLStatusTimestamp}.
      */
     function getAMLStatusTimestamp(address client, string calldata target) external override view returns (uint256 timestamp) {
+        require(client != address(0), "BaseAMLOracle: client must not be 0x0");
+
         return _AMLStatuses[client][target].timestamp;
     }
 
@@ -214,6 +216,8 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
      * @dev See {IBaseAMLOracle-getAMLStatusFee}.
      */
     function getAMLStatusFee(address client, string calldata target) external view override returns (uint256 fee) {
+        require(client != address(0), "BaseAMLOracle: client must not be 0x0");
+
         return _AMLStatuses[client][target].fee;
     }
 
@@ -257,10 +261,9 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
     function _fetchAMLStatus(address client, string calldata target, uint256 maxFee) internal returns (bytes32 amlID, uint8 cScore, uint120 flags) {
         AMLStatus memory status = _getAMLStatusCopy(client, target);
         uint256 fee = _getFee(status);
-        require(status.timestamp > 0, "BaseAMLOracle: no such AML Status");
 
         if (maxFee > 0 && fee > maxFee) {
-            revert("BaseAMLOracle: fee is greater than the maximum specified fee");
+            revert("BaseAMLOracle: required fee is greater than the maximum specified fee");
         }
 
         _balances[client] = _balances[client].sub(fee);
@@ -311,9 +314,10 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
 
     function _getAMLStatusCopy(address client, string calldata target) internal view returns (AMLStatus memory status) {
         require(client != address(0), "BaseAMLOracle: client must not be 0x0");
-        //require(target.len > 0, "BaseAMLOracle: target must not be a zero length string");
+        status = _AMLStatuses[client][target];
+        require(status.timestamp > 0, "BaseAMLOracle: no such AML Status");
 
-        return _AMLStatuses[client][target];
+        return status;
     }
 
     function _getFee(AMLStatus memory status) internal view returns (uint256 fee) {

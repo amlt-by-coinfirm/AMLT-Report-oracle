@@ -53,7 +53,7 @@ contract("ETHOracle", async accounts => {
     });
 
     it("Get AML Status Metadata", async () => {
-      let result = await ETHOracle.getAMLStatusMetadata(accounts[0], "someaddress");
+      let result = await ETHOracle.getAMLStatusMetadata("someaddress");
       const {0: timestamp, 1: fee} = result;
 
       assert.notEqual(timestamp, 0, "Timestamp can't be 0!");

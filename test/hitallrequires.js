@@ -11,9 +11,38 @@ contract("ETHOracle", async accounts => {
 
   context("Hitting the rest of our require()s", () => {
 
-    it("Get AML Status Metadata for 0x0", async () => {
+    it("Testing maxFee on fetch", async () => {
+      await ETHOracle.setAMLStatus(accounts[0], "realaddress", web3.utils.fromAscii("123456789"), 99, 0x1, 123),
       await truffleAssert.reverts(
-        ETHOracle.getAMLStatusMetadata("0x0000000000000000000000000000000000000000", "bogusaddress"),
+        ETHOracle.fetchAMLStatus(100, "realaddress"),
+        "BaseAMLOracle: required fee is greater than the maximum specified fee"
+      );
+    });
+
+    it("Try to get AML Status query fee", async () => {
+      await truffleAssert.reverts(
+        ETHOracle.getAMLStatusFee("0x0000000000000000000000000000000000000000", "bogusaddress"),
+        "BaseAMLOracle: client must not be 0x0"
+      );
+    });
+
+    it("Try to get AML Status query timestamp", async () => {
+      await truffleAssert.reverts(
+        ETHOracle.getAMLStatusTimestamp("0x0000000000000000000000000000000000000000", "bogusaddress"),
+        "BaseAMLOracle: client must not be 0x0"
+      );
+    });
+
+    it("Try to get non-existent AML Status Metadata", async () => {
+      await truffleAssert.reverts(
+        ETHOracle.getAMLStatusMetadata("bogusaddress"),
+        "BaseAMLOracle: no such AML Status"
+      );
+    });
+
+    it("Try to get AML Status Metadata as 0x0", async () => {
+      await truffleAssert.reverts(
+        ETHOracle.methods["getAMLStatusMetadata(address,string)"]("0x0000000000000000000000000000000000000000", "bogusaddress"),
         "BaseAMLOracle: client must not be 0x0"
       );
     });
