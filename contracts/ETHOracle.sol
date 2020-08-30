@@ -58,12 +58,10 @@ contract ETHOracle is RecoverTokens, BaseAMLOracle, IETHOracle {
     /**
      * @dev See {IETHOracle-fetchAMLStatusForETH} and
      * {IBaseAMLOracle-fetchAMLStatus}.
-     *
-     * The client can pay part of the fee from its balance, if desired so.
      */
     function fetchAMLStatusForETH(string calldata target) external override payable returns (bytes32 amlID, uint8 cScore, uint120 flags) {
         _deposit(msg.sender, msg.value);
-        return _fetchAMLStatus(msg.sender, target);
+        return _fetchAMLStatus(msg.sender, target, msg.value);
     }
 
     function _getTotalBalance() internal virtual view override returns (uint256 balance) {

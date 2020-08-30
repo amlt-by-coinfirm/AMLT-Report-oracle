@@ -81,7 +81,7 @@ contract AMLTOracle is RecoverTokens, BaseAMLOracle {
 
         _deposit(msg.sender, fee);
 
-        _fetchAMLStatus(msg.sender, target);
+        _fetchAMLStatus(msg.sender, target, fee);
         _transferHere(msg.sender, fee); // Checks-Effects-Interactions!
 
         return (status.amlID, status.cScore, status.flags);

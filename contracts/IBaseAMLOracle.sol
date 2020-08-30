@@ -290,6 +290,7 @@ interface IBaseAMLOracle {
      *
      * On successful execution, {AMLStatusFetched} EVM event is emitted.
      *
+     * @param maxFee If this is set (>0), the fee is capped
      * @param target Address whose AML status will be fetched
      * @return amlID Reference provided by the Oracle Operator for off-chain
      * integration
@@ -298,7 +299,13 @@ interface IBaseAMLOracle {
      * @return flags Additional flags provided (and defined) by the Oracle
      * Operator
      */
+    function fetchAMLStatus(uint256 maxFee, string calldata target) external returns (bytes32 amlID, uint8 cScore, uint120 flags);
+
+    /**
+     * @dev Like {fetchAMLStatus} above, but with unlimited fees.
+     */
     function fetchAMLStatus(string calldata target) external returns (bytes32 amlID, uint8 cScore, uint120 flags);
+
 
     /**
      * @dev Get metadata regarding an {AMLStatus}.
@@ -317,6 +324,12 @@ interface IBaseAMLOracle {
      * get the AML status data
      */
     function getAMLStatusMetadata(address client, string calldata target) external view returns (uint256 timestamp, uint256 fee);
+
+    /**
+     * Like {getAMLStatusMetadata} above, but presuming `client` to be the
+     * caller.
+     */
+    function getAMLStatusMetadata(string calldata target) external view returns (uint256 timestamp, uint256 fee);
 
     /**
      * @dev Client can query the timestamp only, if so desired.

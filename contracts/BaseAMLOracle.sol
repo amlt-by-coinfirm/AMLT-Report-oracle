@@ -171,11 +171,27 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
      * @dev See {IBaseAMLOracle-fetchAMLStatus}.
      */
     function fetchAMLStatus(string calldata target) external override returns (bytes32 amlID, uint8 cScore, uint120 flags) {
-        return _fetchAMLStatus(msg.sender, target);
+        return _fetchAMLStatus(msg.sender, target, 0);
     }
 
     /**
-     * @dev {IBaseAMLOracle-getAMLStatusMetadata}.
+     * @dev See {IBaseAMLOracle-fetchAMLStatus}.
+     */
+    function fetchAMLStatus(uint256 maxFee, string calldata target) external override returns (bytes32 amlID, uint8 cScore, uint120 flags) {
+        return _fetchAMLStatus(msg.sender, target, maxFee);
+    }
+
+    /**
+     * @dev See {IBaseAMLOracle-getAMLStatusMetadata}.
+     */
+    function getAMLStatusMetadata(string calldata target) external view override returns (uint256 timestamp, uint256 fee) {
+        AMLStatus memory status = _getAMLStatusCopy(msg.sender, target);
+
+        return (status.timestamp, _getFee(status));
+    }
+
+    /**
+     * @dev See {IBaseAMLOracle-getAMLStatusMetadata}.
      */
     function getAMLStatusMetadata(address client, string calldata target) external view override returns (uint256 timestamp, uint256 fee) {
         AMLStatus memory status = _getAMLStatusCopy(client, target);
@@ -238,12 +254,17 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
         emit AMLStatusDeleted(client, target);
     }
 
-    function _fetchAMLStatus(address client, string calldata target) internal returns (bytes32 amlID, uint8 cScore, uint120 flags) {
+    function _fetchAMLStatus(address client, string calldata target, uint256 maxFee) internal returns (bytes32 amlID, uint8 cScore, uint120 flags) {
         AMLStatus memory status = _getAMLStatusCopy(client, target);
-        require(status.timestamp > 0, "BaseAMLOracle: No such AML Status");
+        uint256 fee = _getFee(status);
+        require(status.timestamp > 0, "BaseAMLOracle: no such AML Status");
 
-        _balances[client] = _balances[client].sub(_getFee(status));
-        _balances[_feeAccount] = _balances[_feeAccount].add(_getFee(status));
+        if (maxFee > 0 && fee > maxFee) {
+            revert("BaseAMLOracle: fee is greater than the maximum specified fee");
+        }
+
+        _balances[client] = _balances[client].sub(fee);
+        _balances[_feeAccount] = _balances[_feeAccount].add(fee);
 
         _deleteAMLStatus(client, target);
 
