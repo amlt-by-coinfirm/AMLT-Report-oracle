@@ -13,6 +13,8 @@ The following versions were used during development:
 
 Also a Dockerfile is provided as a template for a development environment.
 
+We also use this particular [`solidity-docgen`](https://github.com/villesundell/solidity-docgen), `ethlint` and `ganache`.
+
 ## Design choices
 **We name each return type**: we need to return a struct-alike for metadata and the AML status, and those should be named variables just for clarity. So for consistency and clarity, we name all the return variables we use. Also fits well to the new NatSpec addition of multiple return variables. We still use "return" to follow OpenZeppelin convention at the same time.
 
@@ -22,9 +24,10 @@ Also a Dockerfile is provided as a template for a development environment.
 
 **AML status is not encrypted on-chain**: The statuses are meant to be read and used by smart contract autonomously, so encryption cannot be used.
 
+**NatSpec style combines traditional and OpenZeppelin approach**: This way we get best of the both worlds, semantic documentation, and consistency with OpenZeppelin codebase.
+
   * virtual/override
   * Assert() strategy: at the end of the function try to get the same result, like in elementary school mathematics, also the other reason..
-  * NatSpec style combines traditional and OpenZeppelin approach
   * ETHOracle and AMLTOracle inherit RecoverTokens separately, it's their job
   * We combine OpenZeppelin's commenting style for non-public variables ("//") with NatSpec ("/// @")
   * Terms: client / client smart contract, AML status / AMLStatus
@@ -37,3 +40,6 @@ Also a Dockerfile is provided as a template for a development environment.
   * @notice is used unconventionally
   * string length (target) not checked because of high gas usage
   * Formal verification not (yet) supported: single developer project would not benefit much
+  * We use `ethlint` and `solidity-docgen`
+  * No problems with transaction ordering: mainly intended to be used inside the same transaction
+  *
