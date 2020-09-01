@@ -17,6 +17,8 @@ import "./RecoverTokens.sol";
 contract ETHOracle is RecoverTokens, BaseAMLOracle, IETHOracle {
     using Address for address payable;
 
+    bytes32 public constant ERC1820INTERFACEHASH = keccak256(abi.encodePacked("AMLOracleAcceptDonationsInETH"));
+
     /**
      * @dev Empty constructor, only invoking the {BaseAMLOracle-constructor}.
      */
@@ -37,7 +39,7 @@ contract ETHOracle is RecoverTokens, BaseAMLOracle, IETHOracle {
      * @dev See {IETHOracle-donateETH}.
      */
     function donateETH(address account) external override payable {
-        _donate(msg.sender, account, msg.value);
+        _donate(msg.sender, account, ERC1820INTERFACEHASH, msg.value);
     }
 
     /**

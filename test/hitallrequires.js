@@ -11,14 +11,6 @@ contract("ETHOracle", async accounts => {
 
   context("Hitting the rest of our require()s", () => {
 
-    it("Testing maxFee on fetch", async () => {
-      await ETHOracle.setAMLStatus(accounts[0], "realaddress", web3.utils.fromAscii("123456789"), 99, 0x1, 123),
-      await truffleAssert.reverts(
-        ETHOracle.fetchAMLStatus(100, "realaddress"),
-        "BaseAMLOracle: required fee is greater than the maximum specified fee"
-      );
-    });
-
     it("Try to get AML Status query fee", async () => {
       await truffleAssert.reverts(
         ETHOracle.getAMLStatusFee("0x0000000000000000000000000000000000000000", "bogusaddress"),
@@ -47,6 +39,50 @@ contract("ETHOracle", async accounts => {
       );
     });
 
+    it("Trying to fetch AML status for 'bogusaddress'", async () => {
+      await truffleAssert.reverts(
+        ETHOracle.fetchAMLStatus(100, "bogusaddress"),
+        "BaseAMLOracle: no such AML Status"
+      );
+    });
+
+    it("Trying to fetch AML status for ''", async () => {
+      await truffleAssert.reverts(
+        ETHOracle.fetchAMLStatus(100, ""),
+        "BaseAMLOracle: target must not be an empty string"
+      );
+    });
+
+    it("Testing maxFee on fetch", async () => {
+      await ETHOracle.setAMLStatus(accounts[0], "realaddress", web3.utils.fromAscii("123456789"), 99, 0x1, 123),
+      await truffleAssert.reverts(
+        ETHOracle.fetchAMLStatus(100, "realaddress"),
+        "BaseAMLOracle: required fee is greater than the maximum specified fee"
+      );
+    });
+
+    it("Trying to fetch without balance fetch", async () => {
+      await ETHOracle.setAMLStatus(accounts[0], "realaddress", web3.utils.fromAscii("123456789"), 99, 0x1, 123),
+      await truffleAssert.reverts(
+        ETHOracle.fetchAMLStatus(123, "realaddress"),
+        "SafeMath: subtraction overflow"
+      );
+    });
+
+    it("Ask AML Status for ''", async () => {
+      await truffleAssert.reverts(
+        ETHOracle.askAMLStatus(0, ""),
+        "BaseAMLOracle: target must not be an empty string"
+      );
+    });
+
+    it("Delete AML Status for ''", async () => {
+      await truffleAssert.reverts(
+        ETHOracle.deleteAMLStatus(accounts[0], ""),
+        "BaseAMLOracle: target must not be an empty string"
+      );
+    });
+
     it("Delete AML Status for 0x0", async () => {
       await truffleAssert.reverts(
         ETHOracle.deleteAMLStatus("0x0000000000000000000000000000000000000000", "bogusaddress"),
@@ -58,6 +94,13 @@ contract("ETHOracle", async accounts => {
       await truffleAssert.reverts(
         ETHOracle.setAMLStatus("0x0000000000000000000000000000000000000000", "bogusaddress", web3.utils.fromAscii("123456789"), 99, 0x1, 123),
         "BaseAMLOracle: cannot set AML status for 0x0"
+      );
+    });
+
+    it("Set AML status for ''", async () => {
+      await truffleAssert.reverts(
+        ETHOracle.setAMLStatus(accounts[0], "", web3.utils.fromAscii("123456789"), 99, 0x1, 123),
+        "BaseAMLOracle: target must not be an empty string"
       );
     });
 
@@ -82,10 +125,10 @@ contract("ETHOracle", async accounts => {
       );
     });
 
-    it("Withdraw 0 amount", async () => {
+    it("Trying to withdraw more than user's balance is", async () => {
       await truffleAssert.reverts(
-        ETHOracle.withdrawETH(0),
-        "BaseAMLOracle: amount to withdraw must be greater than 0"
+        ETHOracle.withdrawETH(1),
+        "SafeMath: subtraction overflow"
       );
     });
 
@@ -93,6 +136,13 @@ contract("ETHOracle", async accounts => {
       await truffleAssert.reverts(
         ETHOracle.withdrawETH(0),
         "BaseAMLOracle: amount to withdraw must be greater than 0"
+      );
+    });
+
+    it("Trying to donate for a client not accepting donations", async () => {
+      await truffleAssert.reverts(
+        ETHOracle.donateETH(accounts[0], {from: accounts[0], value: 1}),
+        "BaseAMLOracle: account does not accept donations"
       );
     });
 
@@ -143,7 +193,7 @@ contract("ETHOracle", async accounts => {
 
     it("recoverTokens()", async () => {
       await truffleAssert.reverts(
-        ETHOracle.recoverTokens(accounts[0], {from:accounts[1]}),
+        ETHOracle.recoverTokens(accounts[0], 1, {from:accounts[1]}),
         "RecoverTokens: caller is not allowed to recover tokens"
       );
     });

@@ -11,6 +11,12 @@ interface IAMLTOracle is IBaseAMLOracle {
      * Before calling this function, the account must have called {AMLToken}'s
      * {IERC20-approve} approving this Oracle to access their tokens.
      *
+     * Account receiving the donation must have AMLOracleAcceptDonationsInAMLT
+     * interface set in the ERC-1820 Registry at
+     * 0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24. The interface indicates
+     * willingness to accept donations from all AMLT Oracles, not just this
+     * particular oracle.
+     *
      * On successful execution, {Donated} EVM event is emitted.
      *
      * @param account Client for which the tokens will be donated to internally
@@ -56,7 +62,9 @@ interface IAMLTOracle is IBaseAMLOracle {
      *
      * On successful execution, {AMLStatusFetched} EVM event is emitted.
      *
-     *
+     * The `fee` provided with the call can be thought as the maximum fee:
+     * if the actual fee is less than the provided amount, excess amount is
+     * deposited for later use (or withdrawal).
      */
-    function fetchAMLStatusForAMLT(string calldata target) external returns (bytes32 amlID, uint8 cScore, uint120 flags);
+    function fetchAMLStatusForAMLT(uint256 fee, string calldata target) external returns (bytes32 amlID, uint8 cScore, uint120 flags);
 }

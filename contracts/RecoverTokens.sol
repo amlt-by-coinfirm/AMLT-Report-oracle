@@ -22,10 +22,11 @@ contract RecoverTokens is AccessControl {
         _setupRole(RECOVER_TOKENS_ROLE, msg.sender);
     }
 
-    function recoverTokens(IERC20 token) public {
+    function recoverTokens(IERC20 token, uint256 amount) public {
         require(hasRole(RECOVER_TOKENS_ROLE, msg.sender), "RecoverTokens: caller is not allowed to recover tokens");
+        require(amount > 0, "RecoverTokens: must recover a positive amount");
 
-        uint256 amount = _tokensToBeRecovered(token);
+        amount = _tokensToBeRecovered(token, amount);
 
         try token.transfer(msg.sender, amount) {
             emit RecoveredTokens(token, amount); // This is in addition to the event emitted by transfer()
@@ -34,15 +35,7 @@ contract RecoverTokens is AccessControl {
         }
     }
 
-    function _getTokenBalance(IERC20 token) internal view virtual returns (uint256 amount) {
-        try token.balanceOf(address(this)) returns (uint256 balance) {
-            return balance;
-        } catch {
-            revert("RecoverTokens: could not query the token balance");
-        }
-    }
-
-    function _tokensToBeRecovered(IERC20 token) internal view virtual returns (uint256 amount) {
-        return _getTokenBalance(token);
+    function _tokensToBeRecovered(IERC20, uint256 amount) internal view virtual returns (uint256 amountToRecover) {
+        return amount;
     }
 }

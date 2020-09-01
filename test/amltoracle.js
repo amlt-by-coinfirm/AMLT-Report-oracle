@@ -28,9 +28,15 @@ contract("AMLTOracle", async accounts => {
 
     it("Remove and restore 'RECOVER_TOKENS_ROLE'", async () => {
       await AMLTOracle.revokeRole(web3.utils.soliditySha3('recoverTokens()'), accounts[0]);
-      await truffleAssert.reverts(AMLTOracle.recoverTokens(TestToken1Contract.address), "RecoverTokens: caller is not allowed to recover tokens");
+      await truffleAssert.reverts(
+        AMLTOracle.recoverTokens(TestToken1Contract.address, 1),
+        "RecoverTokens: caller is not allowed to recover tokens"
+      );
       await AMLTOracle.grantRole(web3.utils.soliditySha3('recoverTokens()'), accounts[0]);
-      await AMLTOracle.recoverTokens(TestToken1Contract.address);
+      await truffleAssert.reverts(
+        AMLTOracle.recoverTokens(TestToken1Contract.address, 1),
+        "AMLTOracle: trying to recover more than allowed"
+      );
     });
   });
 
@@ -43,7 +49,20 @@ contract("AMLTOracle", async accounts => {
     it("Transfer and recover AMLT token", async () => {
       await TestToken1.mint();
       await TestToken1.transfer(AMLTOracleContract.address, 1234);
-      await AMLTOracle.recoverTokens(TestToken1Contract.address);
+      await AMLTOracle.recoverTokens(TestToken1Contract.address, 1234);
+    });
+
+    it("Trying to recover invalid token", async () => {
+      await truffleAssert.reverts(
+        AMLTOracle.recoverTokens(accounts[0], 1)
+      );
+    });
+
+    it("Trying to recover 0 amount", async () => {
+      await truffleAssert.reverts(
+        AMLTOracle.recoverTokens(accounts[0], 0),
+        "RecoverTokens: must recover a positive amount"
+      );
     });
   });
 });

@@ -269,7 +269,8 @@ interface IBaseAMLOracle {
      *
      * @param maxFee Maximum fee the Client is willing to pay, this is not
      * saved to the Oracle state, so the Client can later decide will they pay
-     * the fee or not, since the fee is paid during fetch.
+     * the fee or not, since the fee is paid during fetch. Can be 0 if any fee
+     * suits the client
      * @param target An account the client would like to request AML status for
      */
     function askAMLStatus(uint256 maxFee, string calldata target) external;
@@ -405,4 +406,11 @@ interface IBaseAMLOracle {
      * @return balance Balance for the account
      */
     function balanceOf(address account) external view returns (uint256 balance);
+
+    /**
+     * @dev The way to get total deposited funds.
+     *
+     * @return totalDeposits Funds internally accounted for
+     */
+    function getTotalDeposits() external view returns (uint256 totalDeposits);
 }

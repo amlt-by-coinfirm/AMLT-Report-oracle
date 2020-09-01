@@ -20,7 +20,7 @@ We also use this particular [`solidity-docgen`](https://github.com/villesundell/
 
 **We follow OpenZeppelin's encapsulation pattern**: [described here](https://ethereum.stackexchange.com/questions/67137/why-creating-a-private-variable-and-a-getter-instead-of-just-creating-a-public-v)
 
-**BaseAMLOracle is not a library**: we believe it would make versioning more difficult, and the gas savings marginal, since in most cases of future development, a new BaseAMLOracle would be deployed anyway, making shared code footprint minimal.
+**BaseAMLOracle is not a library**: we believe it would make versioning more difficult, and the gas savings marginal, since in most cases of future development, a new BaseAMLOracle would be deployed anyway, making shared code footprint minimal. Each oracle is designed to be monolith and independent.
 
 **AML status is not encrypted on-chain**: The statuses are meant to be read and used by smart contract autonomously, so encryption cannot be used.
 
@@ -35,11 +35,14 @@ We also use this particular [`solidity-docgen`](https://github.com/villesundell/
   * Solidity version lock
   * No formal verification needed
   * Audits should cover contracts/*.sol only
-  * Many require()s are for client's/user's convenience. Also default values such as 0 are handled somewhat, helping troubleshooting
+  * Many require()s are for client's/user's convenience. Also undesired default values such as 0 are handled somewhat, helping troubleshooting
   * Terminology: client/user, clinet/account, owner/operator/admin, etc.
   * @notice is used unconventionally
   * string length (target) not checked because of high gas usage
   * Formal verification not (yet) supported: single developer project would not benefit much
   * We use `ethlint` and `solidity-docgen`
   * No problems with transaction ordering: mainly intended to be used inside the same transaction
-  *
+  * RecoverToken is not interface'd: not meant for end user, only admin use only. Same with RBAC
+  * Truffle takes care of versioning
+  * AMLTOracle not inheriting a general EIP-20 Oracle: no need, too messy
+  * Gas usage in ask()->set()-fetch() flow is optimized
