@@ -77,7 +77,7 @@ contract ETHOracle is RecoverTokens, BaseAMLOracle, IETHOracle {
      *
      * @return balance Oracle's current total balance
      */
-    function _getTotalBalance() internal virtual view override returns (uint256 balance) {
+    function getTotalBalance() public view virtual override(BaseAMLOracle, IBaseAMLOracle) returns (uint256 balance) {
         return address(this).balance;
     }
 }

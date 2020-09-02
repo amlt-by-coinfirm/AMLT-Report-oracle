@@ -252,6 +252,11 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
         return _totalDeposits;
     }
 
+    /**
+     * @dev See {IBaseAMLOracle-getTotalBalance}.
+     */
+    function getTotalBalance() public view virtual override returns (uint256 balance);
+
     function _setAMLStatus(address client, string calldata target, AMLStatus memory status) internal {
         require(client != address(0), "BaseAMLOracle: cannot set AML status for 0x0");
         require(_getStringLength(target) > 0, "BaseAMLOracle: target must not be an empty string");
@@ -306,7 +311,7 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
         _balances[account] = _balances[account].add(amount);
         _totalDeposits = _totalDeposits.add(amount);
 
-        assert(_getTotalBalance() >= _totalDeposits);
+        assert(getTotalBalance() >= _totalDeposits);
         emit Deposited(account, amount);
     }
 
@@ -318,7 +323,7 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
         _totalDeposits = _totalDeposits.sub(amount);
 
         if (!hasRole(FORCE_WITHDRAW_ROLE, account)) {
-            assert(_getTotalBalance() >= _totalDeposits);
+            assert(getTotalBalance() >= _totalDeposits);
         }
 
         emit Withdrawn(account, amount);
@@ -364,16 +369,4 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
         bytes memory tmp = bytes(str);
         return tmp.length;
     }
-
-    /**
-     * @dev This function provides the total amount of assets to
-     * {BaseAMLOracle} and others interested of Oracle's total asset balance.
-     *
-     * This differs from the {BaseAMLOracle-_totalDeposits}: unlike _totalDeposits, this
-     * value can be forcefully increased, hence it must be higher or equal to
-     * _totalDeposits.
-     *
-     * @return balance Oracle's current total balance
-     */
-    function _getTotalBalance() internal virtual view returns (uint256 balance);
 }

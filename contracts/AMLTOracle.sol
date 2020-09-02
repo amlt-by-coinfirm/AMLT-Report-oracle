@@ -23,7 +23,7 @@ import "./RecoverTokens.sol";
  * AMLT token contract is a trusted contract, so following
  * Checks-Effects-Interactions pattern here would overly compilcate things.
  */
-contract AMLTOracle is RecoverTokens, BaseAMLOracle {
+contract AMLTOracle is RecoverTokens, BaseAMLOracle, IAMLTOracle {
     using SafeMath for uint256; // Applicable only for uint256
 
     /// @dev ERC-1820 Interface Hash provided to 3rd party contracts.
@@ -47,7 +47,7 @@ contract AMLTOracle is RecoverTokens, BaseAMLOracle {
     /**
      * @dev See {IAMLTOracle-donateAMLT}.
      */
-    function donateAMLT(address account, uint256 amount) external {
+    function donateAMLT(address account, uint256 amount) external override {
         _transferHere(msg.sender, amount);
         _donate(msg.sender, account, ERC1820INTERFACEHASH, amount);
     }
@@ -55,7 +55,7 @@ contract AMLTOracle is RecoverTokens, BaseAMLOracle {
     /**
      * @dev See {IAMLTOracle-depositAMLT}.
      */
-    function depositAMLT(uint256 amount) external {
+    function depositAMLT(uint256 amount) external override {
         _transferHere(msg.sender, amount);
         _deposit(msg.sender, amount);
     }
@@ -63,7 +63,7 @@ contract AMLTOracle is RecoverTokens, BaseAMLOracle {
     /**
      * @dev See {IAMLTOracle-withdrawAMLT}.
      */
-    function withdrawAMLT(uint256 amount) external {
+    function withdrawAMLT(uint256 amount) external override {
         _withdraw(msg.sender, amount);
 
         try _amlToken.transfer(msg.sender, amount) {
@@ -81,7 +81,7 @@ contract AMLTOracle is RecoverTokens, BaseAMLOracle {
      * innovative workflows. fetchAMLStatus() is the primary way to fetch
      * AML statuses. This is relatively heavy weight process.
      */
-    function fetchAMLStatusForAMLT(uint256 fee, string calldata target) external returns (bytes32 amlID, uint8 cScore, uint120 flags) {
+    function fetchAMLStatusForAMLT(uint256 fee, string calldata target) external override returns (bytes32 amlID, uint8 cScore, uint120 flags) {
         _deposit(msg.sender, fee);
 
         _transferHere(msg.sender, fee); // Checks-Effects-Interactions!
@@ -92,29 +92,8 @@ contract AMLTOracle is RecoverTokens, BaseAMLOracle {
     /**
      * @dev See {IAMLTOracle-getAMLToken}.
      */
-    function getAMLToken() public view returns (IERC20 amlToken) {
+    function getAMLToken() public view override returns (IERC20 amlToken) {
         return _amlToken;
-    }
-
-    function _transferHere(address from, uint256 amount) internal {
-        try _amlToken.transferFrom(from, address(this), amount) {
-            return;
-        } catch {
-            revert("AMLTOracle: Token transferFrom() failed");
-        }
-    }
-
-    function _tokensToBeRecovered(IERC20 token) internal view override returns (uint256 amountToRecover) {
-        if (address(token) == address(_amlToken)) {
-            uint256 totalBalance = _getTotalBalance();
-            uint256 totalDeposits = getTotalDeposits();
-
-            assert(totalBalance >= totalDeposits);
-
-            return totalBalance.sub(totalDeposits);
-        } else {
-            return token.balanceOf(address(this));
-        }
     }
 
     /**
@@ -127,7 +106,28 @@ contract AMLTOracle is RecoverTokens, BaseAMLOracle {
      *
      * @return balance Oracle's current total balance
      */
-    function _getTotalBalance() internal virtual override view returns (uint256 balance) {
+    function getTotalBalance() public view virtual override(BaseAMLOracle, IBaseAMLOracle) returns (uint256 balance) {
         return _amlToken.balanceOf(address(this));
+    }
+
+    function _transferHere(address from, uint256 amount) internal {
+        try _amlToken.transferFrom(from, address(this), amount) {
+            return;
+        } catch {
+            revert("AMLTOracle: Token transferFrom() failed");
+        }
+    }
+
+    function _tokensToBeRecovered(IERC20 token) internal view override returns (uint256 amountToRecover) {
+        if (address(token) == address(_amlToken)) {
+            uint256 totalBalance = getTotalBalance();
+            uint256 totalDeposits = getTotalDeposits();
+
+            assert(totalBalance >= totalDeposits);
+
+            return totalBalance.sub(totalDeposits);
+        } else {
+            return token.balanceOf(address(this));
+        }
     }
 }

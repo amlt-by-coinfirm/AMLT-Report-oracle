@@ -413,4 +413,16 @@ interface IBaseAMLOracle {
      * @return totalDeposits Funds internally accounted for
      */
     function getTotalDeposits() external view returns (uint256 totalDeposits);
+
+    /**
+     * @dev This function provides the total amount of assets to
+     * {BaseAMLOracle} and others interested of Oracle's total asset balance.
+     *
+     * This differs from the {BaseAMLOracle-_totalDeposits}: unlike _totalDeposits, this
+     * value can be forcefully increased, hence it must be higher or equal to
+     * _totalDeposits.
+     *
+     * @return balance Oracle's current total balance
+     */
+    function getTotalBalance() external view returns (uint256 balance);
 }
