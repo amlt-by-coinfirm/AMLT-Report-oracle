@@ -7,11 +7,11 @@
     "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "truffle test"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Ville Sundell <development@solarius.fi>",
+  "license": "",
   "dependencies": {
     "openzeppelin-solidity": "openzeppelin/openzeppelin-contracts#solc-0.7",
     "truffle-assertions": "^0.9.2"

@@ -64,5 +64,16 @@ contract("AMLTOracle", async accounts => {
         "RecoverTokens: must recover a positive amount"
       );
     });
+
+    it("Try to recover deposited AMLT", async () => {
+      await TestToken1.mint();
+      await TestToken1.approve(AMLTOracleContract.address, 123);
+      await AMLTOracle.depositAMLT(123);
+      await TestToken1.transfer(AMLTOracleContract.address, 1);
+      await truffleAssert.reverts(
+        AMLTOracle.recoverTokens(TestToken1Contract.address, 2),
+        "AMLTOracle: trying to recover more than allowed"
+      );
+    });
   });
 });

@@ -44,16 +44,16 @@ contract AMLTOracle is RecoverTokens, BaseAMLOracle {
      * @dev See {IAMLTOracle-donateAMLT}.
      */
     function donateAMLT(address account, uint256 amount) external {
-        _donate(msg.sender, account, ERC1820INTERFACEHASH, amount);
         _transferHere(msg.sender, amount);
+        _donate(msg.sender, account, ERC1820INTERFACEHASH, amount);
     }
 
     /**
      * @dev See {IAMLTOracle-depositAMLT}.
      */
     function depositAMLT(uint256 amount) external {
-        _deposit(msg.sender, amount);
         _transferHere(msg.sender, amount);
+        _deposit(msg.sender, amount);
     }
 
     /**
@@ -80,14 +80,21 @@ contract AMLTOracle is RecoverTokens, BaseAMLOracle {
     function fetchAMLStatusForAMLT(uint256 fee, string calldata target) external returns (bytes32 amlID, uint8 cScore, uint120 flags) {
         _deposit(msg.sender, fee);
 
-        (amlID, cScore, flags) = _fetchAMLStatus(msg.sender, target, fee);
         _transferHere(msg.sender, fee); // Checks-Effects-Interactions!
 
-        return (amlID, cScore, flags);
+        return _fetchAMLStatus(msg.sender, target, fee);
     }
 
     function getAMLToken() public view returns (IERC20) {
         return _AMLToken;
+    }
+
+    function _transferHere(address from, uint256 amount) internal {
+        try _AMLToken.transferFrom(from, address(this), amount) {
+            return;
+        } catch {
+            revert("AMLTOracle: Token transferFrom() failed");
+        }
     }
 
     function _tokensToBeRecovered(IERC20 token, uint256 amount) internal view override returns (uint256 amountToRecover) {
@@ -98,14 +105,6 @@ contract AMLTOracle is RecoverTokens, BaseAMLOracle {
             return amount;
         } else {
             return amount;
-        }
-    }
-
-    function _transferHere(address from, uint256 amount) internal {
-        try _AMLToken.transferFrom(from, address(this), amount) {
-            return;
-        } catch {
-            revert("AMLTOracle: Token transferFrom() failed");
         }
     }
 
