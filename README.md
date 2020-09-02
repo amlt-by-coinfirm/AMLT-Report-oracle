@@ -26,21 +26,20 @@ We also use this particular [`solidity-docgen`](https://github.com/villesundell/
 
 **NatSpec style combines traditional and OpenZeppelin approach**: This way we get best of the both worlds, semantic documentation, and consistency with OpenZeppelin codebase.
 
-  * virtual/override
+**External functions in BaseAMLOracle are overridable**: In the future it might be useful that the Oracle can override external entrypoints.
+
+**No formal verification**: formal verification would be useless with projects of one author, since someone else should do the specification.
+
   * Assert() strategy: at the end of the function try to get the same result, like in elementary school mathematics, also the other reason..
   * ETHOracle and AMLTOracle inherit RecoverTokens separately, it's their job
   * We combine OpenZeppelin's commenting style for non-public variables ("//") with NatSpec ("/// @")
   * Terms: client / client smart contract, AML status / AMLStatus
   * external->internal(calldata) pattern
   * Solidity version lock
-  * No formal verification needed
   * Audits should cover contracts/*.sol only
   * Many require()s are for client's/user's convenience. Also undesired default values such as 0 are handled somewhat, helping troubleshooting
   * Terminology: client/user, clinet/account, owner/operator/admin, etc.
   * @notice is used unconventionally
-  * string length (target) not checked because of high gas usage
-  * Formal verification not (yet) supported: single developer project would not benefit much
-  * We use `ethlint` and `solidity-docgen`
   * No problems with transaction ordering: mainly intended to be used inside the same transaction
   * RecoverToken is not interface'd: not meant for end user, only admin use only. Same with RBAC
   * Truffle takes care of versioning
