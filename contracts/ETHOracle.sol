@@ -17,12 +17,13 @@ import "./RecoverTokens.sol";
 contract ETHOracle is RecoverTokens, BaseAMLOracle, IETHOracle {
     using Address for address payable;
 
+    /// @dev ERC-1820 Interface Hash provided to 3rd party contracts.
     bytes32 public constant ERC1820INTERFACEHASH = keccak256(abi.encodePacked("AMLOracleAcceptDonationsInETH"));
 
     /**
      * @dev Empty constructor, only invoking the {BaseAMLOracle-constructor}.
      */
-    constructor(address admin, uint256 defaultFee) BaseAMLOracle(admin, defaultFee) {
+    constructor(address admin, uint256 defaultFee) BaseAMLOracle(admin, defaultFee) RecoverTokens(admin) {
 
     }
 
@@ -66,6 +67,16 @@ contract ETHOracle is RecoverTokens, BaseAMLOracle, IETHOracle {
         return _fetchAMLStatus(msg.sender, target, msg.value);
     }
 
+    /**
+     * @dev This function provides the total amount of assets to
+     * {BaseAMLOracle} and others interested of Oracle's total asset balance.
+     *
+     * This differs from the {BaseAMLOracle-_totalDeposits}: unlike _totalDeposits, this
+     * value can be forcefully increased, hence it must be higher or equal to
+     * _totalDeposits.
+     *
+     * @return balance Oracle's current total balance
+     */
     function _getTotalBalance() internal virtual view override returns (uint256 balance) {
         return address(this).balance;
     }

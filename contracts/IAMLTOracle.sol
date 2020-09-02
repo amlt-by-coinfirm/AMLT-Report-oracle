@@ -8,7 +8,7 @@ interface IAMLTOracle is IBaseAMLOracle {
     /**
      * @dev Donating AMLT to an account internally.
      *
-     * Before calling this function, the account must have called {AMLToken}'s
+     * Before calling this function, the account must have called {_amlToken}'s
      * {IERC20-approve} approving this Oracle to access their tokens.
      *
      * Account receiving the donation must have AMLOracleAcceptDonationsInAMLT
@@ -31,7 +31,7 @@ interface IAMLTOracle is IBaseAMLOracle {
      * This function transfers `amount` of tokens from the caller to caller's
      * internal balance for paying fees in the future.
      *
-     * Before calling this function, the account must have called {AMLToken}'s
+     * Before calling this function, the account must have called {_amlToken}'s
      * {IERC20-approve} approving this Oracle to access their tokens.
      *
      * On successful execution, {Deposited} EVM event is emitted.
@@ -67,4 +67,15 @@ interface IAMLTOracle is IBaseAMLOracle {
      * deposited for later use (or withdrawal).
      */
     function fetchAMLStatusForAMLT(uint256 fee, string calldata target) external returns (bytes32 amlID, uint8 cScore, uint120 flags);
+
+    /**
+     * @dev This returns {_amlToken}.
+     *
+     * Since we are following OpenZeppelin's encapsulation design pattern,
+     * each private state variable should have a getter, if meant to be used
+     * by third parties. This can be used to check the token is set correctly.
+     *
+     * @return token The {_amlToken}
+     */
+    function getAMLToken() external view returns (IERC20 token);
 }

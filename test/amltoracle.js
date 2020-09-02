@@ -1,6 +1,7 @@
 const truffleAssert = require('truffle-assertions');
 
 const AMLTOracleContract = artifacts.require("AMLTOracle");
+const ETHOracleContract = artifacts.require("ETHOracle");
 const TestToken1Contract = artifacts.require("TestToken1");
 
 contract("AMLTOracle", async accounts => {
@@ -29,13 +30,13 @@ contract("AMLTOracle", async accounts => {
     it("Remove and restore 'RECOVER_TOKENS_ROLE'", async () => {
       await AMLTOracle.revokeRole(web3.utils.soliditySha3('recoverTokens()'), accounts[0]);
       await truffleAssert.reverts(
-        AMLTOracle.recoverTokens(TestToken1Contract.address, 1),
+        AMLTOracle.recoverTokens(TestToken1Contract.address),
         "RecoverTokens: caller is not allowed to recover tokens"
       );
       await AMLTOracle.grantRole(web3.utils.soliditySha3('recoverTokens()'), accounts[0]);
       await truffleAssert.reverts(
-        AMLTOracle.recoverTokens(TestToken1Contract.address, 1),
-        "AMLTOracle: trying to recover more than allowed"
+        AMLTOracle.recoverTokens(TestToken1Contract.address),
+        "RecoverTokens: must recover a positive amount"
       );
     });
   });
@@ -46,22 +47,22 @@ contract("AMLTOracle", async accounts => {
       TestToken1 = await TestToken1Contract.deployed();
     });
 
+    it("Trying to recover 0 amount", async () => {
+      await truffleAssert.reverts(
+        AMLTOracle.recoverTokens(TestToken1Contract.address),
+        "RecoverTokens: must recover a positive amount"
+      );
+    });
+
     it("Transfer and recover AMLT token", async () => {
       await TestToken1.mint();
       await TestToken1.transfer(AMLTOracleContract.address, 1234);
-      await AMLTOracle.recoverTokens(TestToken1Contract.address, 1234);
+      await AMLTOracle.recoverTokens(TestToken1Contract.address);
     });
 
     it("Trying to recover invalid token", async () => {
       await truffleAssert.reverts(
-        AMLTOracle.recoverTokens(accounts[0], 1)
-      );
-    });
-
-    it("Trying to recover 0 amount", async () => {
-      await truffleAssert.reverts(
-        AMLTOracle.recoverTokens(accounts[0], 0),
-        "RecoverTokens: must recover a positive amount"
+        AMLTOracle.recoverTokens(accounts[0])
       );
     });
 
@@ -69,11 +70,18 @@ contract("AMLTOracle", async accounts => {
       await TestToken1.mint();
       await TestToken1.approve(AMLTOracleContract.address, 123);
       await AMLTOracle.depositAMLT(123);
-      await TestToken1.transfer(AMLTOracleContract.address, 1);
       await truffleAssert.reverts(
-        AMLTOracle.recoverTokens(TestToken1Contract.address, 2),
-        "AMLTOracle: trying to recover more than allowed"
+        AMLTOracle.recoverTokens(TestToken1Contract.address),
+        "RecoverTokens: must recover a positive amount"
       );
+    });
+
+    it("Try to recover accidentally sent AMLT from ETHOracle", async () => {
+      ETHOracle = await ETHOracleContract.deployed();
+
+      await TestToken1.mint();
+      await TestToken1.transfer(ETHOracleContract.address, 123);
+      await ETHOracle.recoverTokens(TestToken1Contract.address);
     });
   });
 });

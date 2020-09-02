@@ -324,10 +324,6 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
         emit Withdrawn(account, amount);
     }
 
-    function _getTotalDeposits() internal view returns (uint256 totalDeposits) {
-        return _totalDeposits;
-    }
-
     function _getAMLStatusCopy(address client, string calldata target) internal view returns (AMLStatus memory status) {
         require(client != address(0), "BaseAMLOracle: client must not be 0x0");
         require(_getStringLength(target) > 0, "BaseAMLOracle: target must not be an empty string");
@@ -337,6 +333,15 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
         return status;
     }
 
+    /**
+     * @dev Determine fee for this particual {AMLStatus} query.
+     *
+     * The fee can be unique for each {AMLStatus} query. Default fee can be
+     * also used, in order to save gas while placing the status on-chain.
+     *
+     * @param status The {AMLStatus} in question
+     * @return fee The resulting fee
+     */
     function _getFee(AMLStatus memory status) internal view returns (uint256 fee) {
         if (status.fee > 0) { // Braces for clarity
             return status.fee;
@@ -345,10 +350,30 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
         }
     }
 
+    /**
+     * @dev A helper function to calculate string length in calldata.
+     *
+     * In our exceptional case, strings reside in `calldata`, calculating
+     * string length there is much cheaper than in `memory`
+     * (let alone `storage`).
+     *
+     * @param str The string to calculate length for
+     * @return length The length of the string
+     */
     function _getStringLength(string calldata str) internal pure returns (uint256 length) {
         bytes memory tmp = bytes(str);
         return tmp.length;
     }
 
+    /**
+     * @dev This function provides the total amount of assets to
+     * {BaseAMLOracle} and others interested of Oracle's total asset balance.
+     *
+     * This differs from the {BaseAMLOracle-_totalDeposits}: unlike _totalDeposits, this
+     * value can be forcefully increased, hence it must be higher or equal to
+     * _totalDeposits.
+     *
+     * @return balance Oracle's current total balance
+     */
     function _getTotalBalance() internal virtual view returns (uint256 balance);
 }

@@ -16,13 +16,17 @@ import "./RecoverTokens.sol";
  * @dev This AML Oracle works with AMLT tokens, and is based on
  * {BaseAMLOracle}.
  *
- * Despite we work with trusted contract only ({_AMLToken}), we follow
- * Checks-Effects-Interactions pattern as a good practice, and to be
- * future-proof.
+ * This is specific to AMLT token contract, and hence is not a generic
+ * ERC-20 implementation. That's why we use try/catch pattern only on
+ * occassions where we know the token contract could revert().
+ *
+ * AMLT token contract is a trusted contract, so following
+ * Checks-Effects-Interactions pattern here would overly compilcate things.
  */
 contract AMLTOracle is RecoverTokens, BaseAMLOracle {
     using SafeMath for uint256; // Applicable only for uint256
 
+    /// @dev ERC-1820 Interface Hash provided to 3rd party contracts.
     bytes32 public constant ERC1820INTERFACEHASH = keccak256(abi.encodePacked("AMLOracleAcceptDonationsInAMLT"));
 
     /**
@@ -30,14 +34,14 @@ contract AMLTOracle is RecoverTokens, BaseAMLOracle {
      * so the same code could be run on many different networks (mainly for
      * testing purposes).
      */
-    IERC20 private _AMLToken;
+    IERC20 private _amlToken;
 
     /**
-     * @dev This constructor only sets the {_AMLToken}, other initialization
+     * @dev This constructor only sets the {_amlToken}, other initialization
      * tasks are done in {BaseAMLOracle}'s constructor.
      */
-    constructor(address admin, uint256 defaultFee, IERC20 AMLToken_) BaseAMLOracle(admin, defaultFee) {
-        _AMLToken = AMLToken_;
+    constructor(address admin, uint256 defaultFee, IERC20 AMLToken_) BaseAMLOracle(admin, defaultFee) RecoverTokens(admin) {
+        _amlToken = AMLToken_;
     }
 
     /**
@@ -62,10 +66,10 @@ contract AMLTOracle is RecoverTokens, BaseAMLOracle {
     function withdrawAMLT(uint256 amount) external {
         _withdraw(msg.sender, amount);
 
-        try _AMLToken.transfer(msg.sender, amount) {
+        try _amlToken.transfer(msg.sender, amount) {
             return;
         } catch {
-            revert("AMLTOracle: Token transfer() failed");
+            assert(false); // We should never reach this!
         }
     }
 
@@ -85,34 +89,45 @@ contract AMLTOracle is RecoverTokens, BaseAMLOracle {
         return _fetchAMLStatus(msg.sender, target, fee);
     }
 
-    function getAMLToken() public view returns (IERC20) {
-        return _AMLToken;
+    /**
+     * @dev See {IAMLTOracle-getAMLToken}.
+     */
+    function getAMLToken() public view returns (IERC20 amlToken) {
+        return _amlToken;
     }
 
     function _transferHere(address from, uint256 amount) internal {
-        try _AMLToken.transferFrom(from, address(this), amount) {
+        try _amlToken.transferFrom(from, address(this), amount) {
             return;
         } catch {
             revert("AMLTOracle: Token transferFrom() failed");
         }
     }
 
-    function _tokensToBeRecovered(IERC20 token, uint256 amount) internal view override returns (uint256 amountToRecover) {
-        if (address(token) == address(_AMLToken)) {
-            // assert() here?
-            uint256 recoverableAmount = _getTotalBalance().sub(_getTotalDeposits());
-            require(recoverableAmount >= amount, "AMLTOracle: trying to recover more than allowed");
-            return amount;
+    function _tokensToBeRecovered(IERC20 token) internal view override returns (uint256 amountToRecover) {
+        if (address(token) == address(_amlToken)) {
+            uint256 totalBalance = _getTotalBalance();
+            uint256 totalDeposits = getTotalDeposits();
+
+            assert(totalBalance >= totalDeposits);
+
+            return totalBalance.sub(totalDeposits);
         } else {
-            return amount;
+            return token.balanceOf(address(this));
         }
     }
 
+    /**
+     * @dev This function provides the total amount of assets to
+     * {BaseAMLOracle} and others interested of Oracle's total asset balance.
+     *
+     * This differs from the {BaseAMLOracle-_totalDeposits}: unlike _totalDeposits, this
+     * value can be forcefully increased, hence it must be higher or equal to
+     * _totalDeposits.
+     *
+     * @return balance Oracle's current total balance
+     */
     function _getTotalBalance() internal virtual override view returns (uint256 balance) {
-        try _AMLToken.balanceOf(address(this)) returns (uint256 totalBalance) {
-            return totalBalance;
-        } catch {
-            revert("AMLTOracle: could not fetch total balance");
-        }
+        return _amlToken.balanceOf(address(this));
     }
 }

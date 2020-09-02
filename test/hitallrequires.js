@@ -193,7 +193,7 @@ contract("ETHOracle", async accounts => {
 
     it("recoverTokens()", async () => {
       await truffleAssert.reverts(
-        ETHOracle.recoverTokens(accounts[0], 1, {from:accounts[1]}),
+        ETHOracle.recoverTokens(accounts[0], {from:accounts[1]}),
         "RecoverTokens: caller is not allowed to recover tokens"
       );
     });
