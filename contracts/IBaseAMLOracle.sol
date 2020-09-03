@@ -425,4 +425,16 @@ interface IBaseAMLOracle {
      * @return balance Oracle's current total balance
      */
     function getTotalBalance() external view returns (uint256 balance);
+
+    /**
+     * @dev Providing ERC-1820 interface identifier to 3rd party smart
+     * contracts.
+     *
+     * In addition to public use, this is also used internally by
+     * {BaseAMLOracle-_donate()}.
+     *
+     * @return interfaceHash The ERC-1820 compatible interface hash of this
+     * contract
+     */
+    function getInterfaceHash() external pure returns (bytes32 interfaceHash);
 }

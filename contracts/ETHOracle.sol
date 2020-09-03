@@ -17,8 +17,8 @@ import "./RecoverTokens.sol";
 contract ETHOracle is RecoverTokens, BaseAMLOracle, IETHOracle {
     using Address for address payable;
 
-    /// @dev ERC-1820 Interface Hash provided to 3rd party contracts.
-    bytes32 public constant ERC1820INTERFACEHASH = keccak256(abi.encodePacked("AMLOracleAcceptDonationsInETH"));
+    /// @dev ERC-1820 Interface Hash.
+    bytes32 private constant ERC1820INTERFACEHASH = keccak256(abi.encodePacked("AMLOracleAcceptDonationsInETH"));
 
     /**
      * @dev Empty constructor, only invoking the {BaseAMLOracle-constructor}.
@@ -40,7 +40,7 @@ contract ETHOracle is RecoverTokens, BaseAMLOracle, IETHOracle {
      * @dev See {IETHOracle-donateETH}.
      */
     function donateETH(address account) external override payable {
-        _donate(msg.sender, account, ERC1820INTERFACEHASH, msg.value);
+        _donate(msg.sender, account, msg.value);
     }
 
     /**
@@ -77,7 +77,14 @@ contract ETHOracle is RecoverTokens, BaseAMLOracle, IETHOracle {
      *
      * @return balance Oracle's current total balance
      */
-    function getTotalBalance() public view virtual override(BaseAMLOracle, IBaseAMLOracle) returns (uint256 balance) {
+    function getTotalBalance() public view override(BaseAMLOracle, IBaseAMLOracle) returns (uint256 balance) {
         return address(this).balance;
+    }
+
+    /**
+     * @dev See {IBaseAMLOracle-getInterfaceHash}.
+     */
+    function getInterfaceHash() public pure override(BaseAMLOracle, IBaseAMLOracle) returns (bytes32 interfaceHash) {
+        return ERC1820INTERFACEHASH;
     }
 }

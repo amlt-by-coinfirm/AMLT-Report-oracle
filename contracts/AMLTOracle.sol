@@ -26,8 +26,8 @@ import "./RecoverTokens.sol";
 contract AMLTOracle is RecoverTokens, BaseAMLOracle, IAMLTOracle {
     using SafeMath for uint256; // Applicable only for uint256
 
-    /// @dev ERC-1820 Interface Hash provided to 3rd party contracts.
-    bytes32 public constant ERC1820INTERFACEHASH = keccak256(abi.encodePacked("AMLOracleAcceptDonationsInAMLT"));
+    /// @dev ERC-1820 Interface Hash.
+    bytes32 private constant ERC1820INTERFACEHASH = keccak256(abi.encodePacked("AMLOracleAcceptDonationsInAMLT"));
 
     /**
      * @dev AMLT token contract address resides here. It's not hardcoded
@@ -49,7 +49,7 @@ contract AMLTOracle is RecoverTokens, BaseAMLOracle, IAMLTOracle {
      */
     function donateAMLT(address account, uint256 amount) external override {
         _transferHere(msg.sender, amount);
-        _donate(msg.sender, account, ERC1820INTERFACEHASH, amount);
+        _donate(msg.sender, account, amount);
     }
 
     /**
@@ -106,8 +106,15 @@ contract AMLTOracle is RecoverTokens, BaseAMLOracle, IAMLTOracle {
      *
      * @return balance Oracle's current total balance
      */
-    function getTotalBalance() public view virtual override(BaseAMLOracle, IBaseAMLOracle) returns (uint256 balance) {
+    function getTotalBalance() public view override(BaseAMLOracle, IBaseAMLOracle) returns (uint256 balance) {
         return _amlToken.balanceOf(address(this));
+    }
+
+    /**
+     * @dev See {IBaseAMLOracle-getInterfaceHash}.
+     */
+    function getInterfaceHash() public pure override(BaseAMLOracle, IBaseAMLOracle) returns (bytes32 interfaceHash) {
+        return ERC1820INTERFACEHASH;
     }
 
     function _transferHere(address from, uint256 amount) internal {

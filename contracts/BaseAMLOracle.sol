@@ -257,6 +257,11 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
      */
     function getTotalBalance() public view virtual override returns (uint256 balance);
 
+    /**
+     * @dev See {IBaseAMLOracle-getInterfaceHash}.
+     */
+    function getInterfaceHash() public pure virtual override returns (bytes32 interfaceHash);
+
     function _setAMLStatus(address client, string calldata target, AMLStatus memory status) internal {
         require(client != address(0), "BaseAMLOracle: cannot set AML status for 0x0");
         require(_getStringLength(target) > 0, "BaseAMLOracle: target must not be an empty string");
@@ -294,9 +299,9 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
         return (status.amlID, status.cScore, status.flags);
     }
 
-    function _donate(address donor, address account, bytes32 interfaceHash, uint256 amount) internal {
+    function _donate(address donor, address account, uint256 amount) internal {
         assert(donor != address(0)); // Should never be 0x0
-        address recipient = ERC1820REGISTRY.getInterfaceImplementer(account, interfaceHash);
+        address recipient = ERC1820REGISTRY.getInterfaceImplementer(account, getInterfaceHash());
         require(recipient != address(0), "BaseAMLOracle: account does not accept donations");
 
         _deposit(recipient, amount);
