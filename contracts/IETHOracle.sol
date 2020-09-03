@@ -3,6 +3,7 @@ pragma solidity ^0.7.0; // See README.md for our Solidity version strategy
 
 import "./IBaseAMLOracle.sol";
 
+
 interface IETHOracle is IBaseAMLOracle {
     /**
      * @dev Donating Ether to an account internally.

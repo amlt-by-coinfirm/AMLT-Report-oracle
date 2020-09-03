@@ -4,6 +4,16 @@ pragma solidity ^0.7.0; // See README.md for our Solidity version strategy
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "./IBaseAMLOracle.sol";
 
+/**
+ * @title AMLTOracle - AML Oracle with AMLT token payments, inherits
+ * {IBaseAMLOracle}
+ * @author Ville Sundell <development@solarius.fi>
+ * @dev This AML Oracle works with AMLT tokens, and is based on
+ * {BaseAMLOracle}.
+ *
+ * This is specific to AMLT token contract, and hence is not a generic
+ * ERC-20 implementation.
+ */
 interface IAMLTOracle is IBaseAMLOracle {
     /**
      * @dev Donating AMLT to an account internally.

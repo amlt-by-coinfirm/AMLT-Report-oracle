@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENCED
 pragma solidity ^0.7.0; // See README.md for our Solidity version strategy
 
+
 interface IBaseAMLOracle {
     /**
      * @dev Emitted when default fee is set/changed.

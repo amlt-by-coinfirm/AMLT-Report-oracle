@@ -45,6 +45,8 @@ import "./IBaseAMLOracle.sol";
  * At first the _Oracle Operator_ is the _Admin_, but later the Operator can
  * assign various other actors to various roles, including the Admin.
  */
+
+
 abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
     using SafeMath for uint256; // Applicable only for uint256
 
@@ -69,7 +71,7 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
     IERC1820Registry constant ERC1820REGISTRY = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
 
     /// @dev All the {AMLStatus} entries reside here
-    mapping (address => mapping (string => AMLStatus)) private _AMLStatuses;
+    mapping (address => mapping (string => AMLStatus)) private _amlStatuses;
     /// @dev Balance tracking for non-custodial and fee handling logic is done here
     mapping (address => uint256) private _balances;
 
@@ -132,7 +134,7 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
     /**
      * @dev See {IBaseAMLOracle-notify}.
      */
-    function notify(address client, string calldata message) external virtual override  {
+    function notify(address client, string calldata message) external virtual override {
         require(hasRole(NOTIFY_ROLE, msg.sender), "BaseAMLOracle: caller is not allowed to notify the clients");
         require(client != address(0), "BaseAMLOracle: client must not be 0x0");
 
@@ -146,7 +148,8 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
         require(hasRole(SET_AML_STATUS_ROLE, msg.sender), "BaseAMLOracle: caller is not allowed to set AML statuses");
         AMLStatus memory status;
 
-        status = AMLStatus(amlID, cScore, flags, uint128(block.timestamp), fee); // The timestamp is not critical, and will overflow in ~10 nonillion (US) years (10,783,118,943,836,478,994,022,445,749,252)
+        // The timestamp is not critical
+        status = AMLStatus(amlID, cScore, flags, uint128(block.timestamp), fee);
         _setAMLStatus(client, target, status);
     }
 
@@ -207,7 +210,7 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
         require(client != address(0), "BaseAMLOracle: client must not be 0x0");
         require(_getStringLength(target) > 0, "BaseAMLOracle: target must not be an empty string");
 
-        return _AMLStatuses[client][target].timestamp;
+        return _amlStatuses[client][target].timestamp;
     }
 
     /**
@@ -221,7 +224,7 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
         require(client != address(0), "BaseAMLOracle: client must not be 0x0");
         require(_getStringLength(target) > 0, "BaseAMLOracle: target must not be an empty string");
 
-        return _AMLStatuses[client][target].fee;
+        return _amlStatuses[client][target].fee;
     }
 
     /**
@@ -267,7 +270,7 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
         require(_getStringLength(target) > 0, "BaseAMLOracle: target must not be an empty string");
         require(status.cScore < 100, "BaseAMLOracle: The cScore must be between 0 and 99");
 
-        _AMLStatuses[client][target] = status;
+        _amlStatuses[client][target] = status;
 
         emit AMLStatusSet(client, target);
     }
@@ -276,7 +279,7 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
         require(client != address(0), "BaseAMLOracle: cannot delete AML status for 0x0");
         require(_getStringLength(target) > 0, "BaseAMLOracle: target must not be an empty string");
 
-        delete(_AMLStatuses[client][target]);
+        delete(_amlStatuses[client][target]);
 
         emit AMLStatusDeleted(client, target);
     }
@@ -337,7 +340,7 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
     function _getAMLStatusCopy(address client, string calldata target) internal view returns (AMLStatus memory status) {
         require(client != address(0), "BaseAMLOracle: client must not be 0x0");
         require(_getStringLength(target) > 0, "BaseAMLOracle: target must not be an empty string");
-        status = _AMLStatuses[client][target];
+        status = _amlStatuses[client][target];
         require(status.timestamp > 0, "BaseAMLOracle: no such AML Status");
 
         return status;

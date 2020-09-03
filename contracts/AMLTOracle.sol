@@ -9,6 +9,7 @@ import "./BaseAMLOracle.sol";
 import "./IAMLTOracle.sol";
 import "./RecoverTokens.sol";
 
+
 /**
  * @title AMLTOracle - AML Oracle with AMLT token payments, inherits
  * {BaseAMLOracle}
@@ -40,8 +41,8 @@ contract AMLTOracle is RecoverTokens, BaseAMLOracle, IAMLTOracle {
      * @dev This constructor only sets the {_amlToken}, other initialization
      * tasks are done in {BaseAMLOracle}'s constructor.
      */
-    constructor(address admin, uint256 defaultFee, IERC20 AMLToken_) BaseAMLOracle(admin, defaultFee) RecoverTokens(admin) {
-        _amlToken = AMLToken_;
+    constructor(address admin, uint256 defaultFee, IERC20 amlToken_) BaseAMLOracle(admin, defaultFee) RecoverTokens(admin) {
+        _amlToken = amlToken_;
     }
 
     /**
