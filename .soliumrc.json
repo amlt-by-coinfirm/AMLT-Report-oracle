@@ -13,7 +13,7 @@
     "conditionals-whitespace": "warning",
     "quotes": ["warning", "double"],
     "no-empty-blocks": "off",
-    "indentation": ["warning", 2],
+    "indentation": ["warning", 4],
     "max-len": ["warning", 120],
     "arg-overflow": ["warning", 3],
     "no-constant": "error",
