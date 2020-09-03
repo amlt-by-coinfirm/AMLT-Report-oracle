@@ -84,4 +84,33 @@ contract("AMLTOracle", async accounts => {
       await ETHOracle.recoverTokens(TestToken1Contract.address);
     });
   });
+
+  context('Token recovery', () => {
+    beforeEach('setup', async () => {
+      TestToken1 = await TestToken1Contract.deployed();
+    });
+
+    it("Pay fee in AMLT on fetch", async () => {
+      await TestToken1.mint();
+      await TestToken1.approve(AMLTOracleContract.address, 123);
+
+      await AMLTOracle.setAMLStatus(accounts[0], "someaddress", web3.utils.fromAscii("123456789"), 99, 0xFF, 100);
+      await AMLTOracle.fetchAMLStatusForAMLT(123, "someaddress");
+    });
+
+    it("Pay fee in AMLT beforehand", async () => {
+      await TestToken1.mint();
+      await TestToken1.approve(AMLTOracleContract.address, 123);
+      await AMLTOracle.depositAMLT(123);
+      await AMLTOracle.setAMLStatus(accounts[0], "someaddress", web3.utils.fromAscii("123456789"), 99, 0xFF, 100);
+      await AMLTOracle.fetchAMLStatus(123, "someaddress");
+    });
+
+    it("Deposit and withdraw AMLT", async () => {
+      await TestToken1.mint();
+      await TestToken1.approve(AMLTOracleContract.address, 123);
+      await AMLTOracle.depositAMLT(123);
+      await AMLTOracle.withdrawAMLT(123);
+    });
+  });
 });

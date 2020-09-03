@@ -83,9 +83,9 @@ contract AMLTOracle is RecoverTokens, BaseAMLOracle, IAMLTOracle {
      * AML statuses. This is relatively heavy weight process.
      */
     function fetchAMLStatusForAMLT(uint256 fee, string calldata target) external override returns (bytes32 amlID, uint8 cScore, uint120 flags) {
-        _deposit(msg.sender, fee);
-
         _transferHere(msg.sender, fee); // Checks-Effects-Interactions!
+
+        _deposit(msg.sender, fee);
 
         return _fetchAMLStatus(msg.sender, target, fee);
     }
