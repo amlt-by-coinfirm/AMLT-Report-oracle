@@ -45,3 +45,4 @@ We also use this particular [`solidity-docgen`](https://github.com/villesundell/
   * Truffle takes care of versioning
   * AMLTOracle not inheriting a general EIP-20 Oracle: no need, too messy
   * Gas usage in ask()->set()-fetch() flow is optimized
+  * Timestamp not critical

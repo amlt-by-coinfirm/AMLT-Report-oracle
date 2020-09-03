@@ -42,6 +42,9 @@ import "./IBaseAMLOracle.sol";
  * one exception: FORCE_WITHDRAW_ROLE which can be used to skip the `assert()`
  * upon withdrawal if there is ever such need.
  *
+ * NOTE: DEFAULT_ADMIN_ROLE is not revoked automatically so further
+ * administrative actions can be taken, and must be revoked manually!
+ *
  * At first the _Oracle Operator_ is the _Admin_, but later the Operator can
  * assign various other actors to various roles, including the Admin.
  */
@@ -87,6 +90,10 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
     /**
      * @dev Constructor sets up the Role Based Access Control, and sets the
      * initial _feeAccount to `admin`.
+     *
+     * NOTE: DEFAULT_ADMIN_ROLE is not revoked automatically so further
+     * administrative actions can be taken, and must be revoked manually!
+     *
      * @param admin The address which will initally be the superadmin, and part
      * of all the roles.
      * @param defaultFee_ The initial default fee, can be 0
@@ -265,6 +272,14 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
      */
     function getInterfaceHash() public pure virtual override returns (bytes32 interfaceHash);
 
+    /**
+     * @dev Internal setter for setting/updating any given {AMLStatus}.
+     *
+     * @param client Client smart contract whose AML status database is used
+     * for this action
+     * @param target The target address whose {AMLStatus} entry is going to be
+     * set/updated
+     */
     function _setAMLStatus(address client, string calldata target, AMLStatus memory status) internal {
         require(client != address(0), "BaseAMLOracle: cannot set AML status for 0x0");
         require(_getStringLength(target) > 0, "BaseAMLOracle: target must not be an empty string");
@@ -337,6 +352,16 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
         emit Withdrawn(account, amount);
     }
 
+    /**
+     * @dev We take a copy of the {AMLStatus} entry in question and place it
+     * to `memory` for cheaper handling.
+     *
+     * @param client Client smart contract whose AML status database is used
+     * for this action
+     * @param target The target address whose {AMLStatus} entry was
+     * requested
+     * @return status The in-memory copy of {AMLStatus} in question
+     */
     function _getAMLStatusCopy(address client, string calldata target) internal view returns (AMLStatus memory status) {
         require(client != address(0), "BaseAMLOracle: client must not be 0x0");
         require(_getStringLength(target) > 0, "BaseAMLOracle: target must not be an empty string");
