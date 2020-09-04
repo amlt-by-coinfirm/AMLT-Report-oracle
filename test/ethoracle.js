@@ -83,6 +83,13 @@ contract("ETHOracle", async accounts => {
       });
     });
 
+    it("Verifying that unprotected ether withrawal is not possible", async () => {
+      await truffleAssert.reverts(
+        ETHOracle.withdrawETH(1, {from: accounts[2]}),
+        "SafeMath: subtraction overflow"
+      );
+    });
+
     it("Withdraw fees", async () => {
       let result = await ETHOracle.withdrawETH(100, {from: accounts[1]});
 
