@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENCED
-pragma solidity ^0.7.0; // See README.md for our Solidity version strategy
+pragma solidity ^0.7.0; // See README.md's section "Solidity version"
 
 import "./IBaseAMLOracle.sol";
 

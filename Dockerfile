@@ -10,4 +10,4 @@ RUN apt-get install -y nodejs
 RUN npm install -g truffle
 RUN npm install
 RUN truffle test
-ENTRYPOINT truffle
+ENTRYPOINT ["truffle"]

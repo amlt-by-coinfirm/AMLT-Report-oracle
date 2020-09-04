@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENCED
-pragma solidity ^0.7.0; // See README.md for our Solidity version strategy
+pragma solidity ^0.7.0; // See README.md's section "Solidity version"
 
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "./IBaseAMLOracle.sol";

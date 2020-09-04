@@ -1,14 +1,9 @@
 /**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- * Original: https://github.com/TokenMarketNet/smart-contracts/blob/master/contracts/Recoverable.sol
- * SPDX-License-Identifier: Apache-2.0
+ * SPDX-License-Identifier: UNLICENCED
+ * Inspiration: https://github.com/TokenMarketNet/smart-contracts/blob/master/contracts/Recoverable.sol
  */
 
-// We lock the Solidity version, per:
-// https://consensys.github.io/smart-contract-best-practices/recommendations/#lock-pragmas-to-specific-compiler-version
-pragma solidity 0.7.0; // Avoiding regressions by using the oldest safe Solidity, instead of the latest
+pragma solidity 0.7.0; // See README.md's section "Solidity version"
 
 import "openzeppelin-solidity/contracts/access/AccessControl.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
@@ -18,11 +13,24 @@ import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
  * @title RecoverTokens - a way to recover tokens sent to the contract by
  * accident
  * @author Ville Sundell <development@solarius.fi>
- * @dev
+ * @dev This contract provides a way for the contract operator to recover
+ * tokens which were sent to this contract by accident by a 3rd party.
+ *
+ * 100% of the tokens owned by the contract will be recovered by default.
+ *
+ * If the contract is intended to host tokens, the parent contract must
+ * override `_tokensToBeRecovered()`.
  */
 contract RecoverTokens is AccessControl {
     bytes32 public constant RECOVER_TOKENS_ROLE = keccak256("recoverTokens()");
 
+    /**
+     * @dev Emitted when token recovery is done for the particular token.
+     *
+     * @param token The token contract which was used for the recovery
+     * @param amount Amount of the tokens recovered, should be 100% of
+     * contract's possessions.
+     */
     event RecoveredTokens(IERC20 indexed token, uint256 amount);
 
     /**

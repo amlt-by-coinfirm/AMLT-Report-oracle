@@ -1,15 +1,14 @@
 # Coinfirm AML Oracle smart contracts
 
-## Versions
-The following versions were used during development:
+## Quick start
+`docker build .`
 
-  * Nodejs: v12.18.3
-  * NPM: 6.14.6
-  * Truffle:
-    Truffle v5.1.37 (core: 5.1.37)
-    Solidity - 0.7.0 (solc-js)
-    Node v12.18.3
-    Web3.js v1.2.1
+## Versions
+The project should be compiled using the following software configuration:
+ - Truffle v5.1.43 (core: 5.1.43)
+ - Solidity - 0.7.0 (solc-js)
+ - Node v10.22.0
+ - Web3.js v1.2.1
 
 Also a Dockerfile is provided as a template for a development environment.
 
@@ -30,12 +29,17 @@ We also use this particular [`solidity-docgen`](https://github.com/villesundell/
 
 **No formal verification**: formal verification would be useless with projects of one author, since someone else should do the specification.
 
+**Solidity version**: We use *earliest safe Solidity from the series*, instead of the absolute newest one. This is to avoid regressions with recently released versions. At the time of writing, the latest Solidity was `0.7.1`, and the earliest safe Solidity of the `0.7.x` series was `0.7.0`. The code was written for the new 0.7.x series since Solidity team's [official stance](https://github.com/ethereum/solidity/releases/tag/v0.7.0) is, that they won't maintain earlier serieses, and "it is recommended to upgrade all code to be compatible with Solidity v.0.7.0". Per Solidity versioning [best practices](https://consensys.github.io/smart-contract-best-practices/recommendations/#lock-pragmas-to-specific-compiler-version), we "float" Solidity version only with the files which are:
+ - going to be used by third parties, such as interfaces, and
+ - for testing, and not for on-chain use.
+
+
+
   * Assert() strategy: at the end of the function try to get the same result, like in elementary school mathematics, also the other reason..
   * ETHOracle and AMLTOracle inherit RecoverTokens separately, it's their job
   * We combine OpenZeppelin's commenting style for non-public variables ("//") with NatSpec ("/// @")
   * Terms: client / client smart contract, AML status / AMLStatus
   * external->internal(calldata) pattern
-  * Solidity version lock
   * Audits should cover contracts/*.sol only
   * Many require()s are for client's/user's convenience. Also undesired default values such as 0 are handled somewhat, helping troubleshooting
   * Terminology: client/user, clinet/account, owner/operator/admin, etc.

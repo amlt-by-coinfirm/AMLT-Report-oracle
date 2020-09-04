@@ -1,8 +1,5 @@
 // SPDX-License-Identifier: UNLICENCED
-
-// We lock the Solidity version, per:
-// https://consensys.github.io/smart-contract-best-practices/recommendations/#lock-pragmas-to-specific-compiler-version
-pragma solidity 0.7.0; // See README.md for our Solidity version strategy
+pragma solidity 0.7.0; // See README.md's section "Solidity version"
 
 import "openzeppelin-solidity/contracts/introspection/IERC1820Registry.sol";
 import "openzeppelin-solidity/contracts/access/AccessControl.sol";
