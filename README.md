@@ -1,12 +1,12 @@
 # Coinfirm AML Oracle smart contracts
 
-**Coinfirm aims to provide smart contracts on Ethereum a way to query AML Status of any
+**Coinfirm provides smart contracts on Ethereum a way to query AML Status of any
 address on any of the blockchain networks supported by Coinfirm.**
 
 ## Quick start
 `docker build .`
 
-##Design overview
+## Design overview
 Coinfirm extends their AML service coverage to various on-chain applications on
 Ethereum, like Distributed Exchanges (“DEX”).
 
@@ -63,11 +63,11 @@ contract) shall be deployed if improvements are needed. For more information beh
 this reasoning, please read my blogpost ​[here​](https://www.linkedin.com/pulse/when-code-must-law-smart-contracts-suits-ville-sundell) . An upgradable contract would not reduce
 audit needs, since one single bug can still result in substantial financial loss.
 
-**"Get" over "push"**​: due to Ethereum’s design, the Oracle must be asynchronous.
+**`get` over `push`**​: due to Ethereum’s design, the Oracle must be asynchronous.
 However, the Oracle could follow two design patterns:
- - **Get**: fetch the address from the oracle. This was chosen because gas cost
+ - **`get`**: fetch the address from the oracle. This was chosen because gas cost
 would be always constant (and minimal) for Coinfirm.
- - **Push**: oracle calls a callback function on the client contract. Downside is, that the
+ - **`push`**: oracle calls a callback function on the client contract. Downside is, that the
 callback gas usage cannot be predicted (since that would be implementation
 specific), and Coinfirm would need to take into account huge gas usage, and
 expenses. Also this would make the client contract design harder, since the extra
@@ -130,20 +130,20 @@ they so desire.
 
 **We rely on Truffle's versioning**: instead of implementing our own versioning, we use Truffle's migrations to keep accounts of versions.
 
-**Explicit naming​**: ​ functions like depositETH()​, ​depositAMLT()​, etc.​ are explicit for clarity.
+**Explicit naming​**: ​ functions like `depositETH()​`, `​depositAMLT()`​, etc.​ are explicit for clarity.
 
-**External/internal design pattern**: +calldata
+**External/internal design pattern**: we implement our own design pattern, where `external` entrypoints use `internal` getters and setters.  We do this for two reasons: semantically it marks a user-accessible entry point, and gives us marginal gas savings when handling complex data types. Setters and getters from OpenZeppelin's contract encapsulation pattern also supports our pattern. Getters for unique variables (getters without arguments) are implemented as `public`.
 
-**DEFAULT_ADMIN_ROLE must be transferred manually**:
+**DEFAULT_ADMIN_ROLE must be transferred manually**
 
-**Externals in AMLTOracle and ETHOracle are not overridable**:
+**Externals in AMLTOracle and ETHOracle are not overridable**: Oracles themselves are not designed to be inherited. Oracles should consist of two parts: BaseAMLOracle and the contract implementing payment method(s). If you want extended functionality, create a new contract which inherits BaseAMLOracle.
 
 **Transaction ordering is taken into account (security)**: most of the function calls are designed to be used within the same transaction (such as `getAMLStatusMetadata()` and `fetchAMLStatus()`), so transaction ordering is not a security problem. Also, `fetchAMLStatus()` with the optional `maxFee` can be used if desired. See the documentation for more details.
 
 ## Terminology
 We use the following terminology in the code and related documentation:
-- **oracle**: The whole monolithic contract `client`s interact with. Inherits `IBaseAMLOracle`.
-- **account**: Any account on Ethereum.
+- **oracle**: the whole monolithic contract `clients` interact with. Inherits `IBaseAMLOracle`.
+- **account**: any account on Ethereum, might be a contract or externally operated.
 - **client / client smart contract / user**: The smart contract/`account` using the Oracle. Oracles are designed to be used by smart contracts, but can be used by any Ethereum account.
 - **oracle operator**: the entity managing the oracle and related off-chain services.
 - **admin**: an entity managing the Oracle smart contract(s), and working for the Oracle Operator.

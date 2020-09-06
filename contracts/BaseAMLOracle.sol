@@ -16,8 +16,8 @@ import "./IBaseAMLOracle.sol";
  *    non-custodial logic implemented in this contract.
  *
  * This contract covers:
- *  - non-custodial logic ({}),
- *  - AML Status handling logic ({}), and
+ *  - non-custodial logic,
+ *  - AML Status handling logic, and
  *  - fee handling.
  *
  * We follow modern OpenZeppelin design pattern on contract encapsulation,
@@ -33,7 +33,6 @@ import "./IBaseAMLOracle.sol";
  * External functions are overridable: in the future it might be useful that
  * the Oracle (contract inheriting this contract) can override external
  * entrypoints.
-
  *
  * We also implement a granular role-based access control by inheriting
  * {AccessControl}. Because we combine role-based access control with function
@@ -47,8 +46,8 @@ import "./IBaseAMLOracle.sol";
  * NOTE: DEFAULT_ADMIN_ROLE is not revoked automatically so further
  * administrative actions can be taken, and must be revoked manually!
  *
- * At first the _Oracle Operator_ is the _Admin_, but later the Operator can
- * assign various other actors to various roles, including the Admin.
+ * At first the *Oracle Operator* is the *Admin*, but later the Operator can
+ * assign various other actors to various roles.
  */
 
 
