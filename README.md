@@ -1,7 +1,43 @@
 # Coinfirm AML Oracle smart contracts
 
+**Coinfirm aims to provide smart contracts on Ethereum a way to query AML Status of any
+address on any of the blockchain networks supported by Coinfirm.**
+
 ## Quick start
 `docker build .`
+
+##Design overview
+Coinfirm extends their AML service coverage to various on-chain applications on
+Ethereum, like Distributed Exchanges (“DEX”).
+
+To facilitate this, smart contracts are needed to provide such a service to ​ Client Smart Contracts
+(like a DEX) on-chain.
+
+Because of Ethereum’s technical limitations, ​ AML Status ​ query must be asynchronous, meaning
+that the Client Smart Contract must query and fetch the status for any given address (on any
+blockchain supported by Coinfirm) separately.
+
+The design focuses on security and gas usage (so long term usage would be as cheap as
+possible).
+
+In the future there can be various Oracle smart contracts deployed in various configurations and
+code revisions running in parallel. Each Oracle may implement different AML Status formats,
+workflow and method of payment.
+
+This initial design specifies two independent Oracles, one taking fees in Ether, and another in
+AMLT (Coinfirm’s own AML Token).
+
+## Design
+- There is one base contract named ​ AMLOracle​ , which is inherited by user-facing ​ AMLTOracle
+(for AMLT payments) and ​ ETHOracle​ (for Ether payments). Different smart contracts inheriting
+the ​ AMLOracle​ can be introduced later, if needed.
+
+- The contracts will inherit ​ AccessControl​ (for role based ownership/access control), and
+Recoverable​ (for recovering foreign tokens) smart contracts. It will also rely on ​ EIP-1820
+when querying the client smart contract’s willingness to accept donations.
+
+- This design also allows non-custodial ownership of funds, and an inexpensive way to pay fees
+to Coinfirm.
 
 ## Versions
 The project should be compiled using the following software configuration:
@@ -20,6 +56,47 @@ The code is not audited yet, but must be audited before its use in production.
 The audit should cover only [`contracts/`](contracts/) without its subdirectories.
 
 ## Design choices
+
+**The code is not upgradable​**: client smart contracts must be able to trust that the
+Oracle stays unchanged, and does not break their contract. A new oracle (or an auxiliary
+contract) shall be deployed if improvements are needed. For more information behind
+this reasoning, please read my blogpost ​[here​](https://www.linkedin.com/pulse/when-code-must-law-smart-contracts-suits-ville-sundell) . An upgradable contract would not reduce
+audit needs, since one single bug can still result in substantial financial loss.
+
+**"Get" over "push"**​: due to Ethereum’s design, the Oracle must be asynchronous.
+However, the Oracle could follow two design patterns:
+ - **Get**: fetch the address from the oracle. This was chosen because gas cost
+would be always constant (and minimal) for Coinfirm.
+ - **Push**: oracle calls a callback function on the client contract. Downside is, that the
+callback gas usage cannot be predicted (since that would be implementation
+specific), and Coinfirm would need to take into account huge gas usage, and
+expenses. Also this would make the client contract design harder, since the extra
+gas cost when invoked the callback from the oracle should be taken into account.
+
+**AML status is deleted for each address after ​`get()`​**:
+ - This way a rogue actor cannot get an up-to-date AML database from the
+blockchain (where ultimately all the information is publicly available), and
+ - we get the gas refund (for deleting information on-chain).
+Fee is paid only when ​ get()​ is called​ . This is important for two reasons:
+ - This is vital for non-custodialship: the Oracle owner can’t confiscate client smart
+contract’s tokens by specifying ridiculous fees.
+ - One requirement was that fees might be different for different client smart
+contracts, paying this kind of fee on ​ ask()​ would make the Oracle contract more
+complicated.
+ - In addition to ​ ask()->put()->get()​ pattern ​ put()->get()​ pattern is also
+supported. Therefore it makes sense to pay the fee on ​ get()​ , as the last link of
+the chain.
+
+**Oracle deals with structured AML Statuses, instead of raw byte arrays​**: instead of
+raw byte arrays, the Oracle uses hardcoded structures (technically, ​ tuples ​ ) for AML
+Statuses. Although byte arrays would be easier to relay to the client smart contract, this
+approach provides client smart contracts a convenient, reliable and fixed way to receive
+AML Statuses, without requiring a custom-made deserialization code. If the format is
+changed in the future, a new Oracle must be deployed.
+
+**Gas Station Network not supported​**: since we are not serving the end customer
+directly, it would be impractical to support the GSN: that’s Client Smart Contract’s job, if
+they so desire.
 
 **We name each return type**: we need to return a struct-alike for metadata and the AML status, and those should be named variables just for clarity. So for consistency and clarity, we name all the return variables we use. Also fits well to the new NatSpec addition of multiple return variables. We still use "return" to follow OpenZeppelin convention at the same time.
 
@@ -53,6 +130,8 @@ The audit should cover only [`contracts/`](contracts/) without its subdirectorie
 
 **We rely on Truffle's versioning**: instead of implementing our own versioning, we use Truffle's migrations to keep accounts of versions.
 
+**Explicit naming​**: ​ functions like depositETH()​, ​depositAMLT()​, etc.​ are explicit for clarity.
+
 **External/internal design pattern**: +calldata
 
 **DEFAULT_ADMIN_ROLE must be transferred manually**:
@@ -61,4 +140,12 @@ The audit should cover only [`contracts/`](contracts/) without its subdirectorie
 
 **Transaction ordering is taken into account (security)**: most of the function calls are designed to be used within the same transaction (such as `getAMLStatusMetadata()` and `fetchAMLStatus()`), so transaction ordering is not a security problem. Also, `fetchAMLStatus()` with the optional `maxFee` can be used if desired. See the documentation for more details.
 
-  * Terminology: client/user, clinet/account, owner/operator/admin, etc. client / client smart contract, AML status / AMLStatus
+## Terminology
+We use the following terminology in the code and related documentation:
+- **oracle**: The whole monolithic contract `client`s interact with. Inherits `IBaseAMLOracle`.
+- **account**: Any account on Ethereum.
+- **client / client smart contract / user**: The smart contract/`account` using the Oracle. Oracles are designed to be used by smart contracts, but can be used by any Ethereum account.
+- **oracle operator**: the entity managing the oracle and related off-chain services.
+- **admin**: an entity managing the Oracle smart contract(s), and working for the Oracle Operator.
+- **AML status**: general term for refering to any piece(s) of AML status information.
+- **AMLStatus**: refers to the `AMLStatus` structure defined in `BaseAMLOracle.sol`, containing all the pieces for an AML status.
