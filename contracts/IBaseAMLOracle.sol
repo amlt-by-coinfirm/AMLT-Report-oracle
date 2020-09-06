@@ -70,7 +70,8 @@ interface IBaseAMLOracle {
      * - Client Smart Contract fetches an AML status, and the status is
      *   subsequently removed.
      *
-     * @param client Client smart contract whose AML status database is affected
+     * @param client Client smart contract whose AML status database is
+     * affected
      * @param target The target address whose {AMLStatus} was deleted
      */
     event AMLStatusDeleted(address indexed client, string target);
@@ -201,7 +202,8 @@ interface IBaseAMLOracle {
      *
      * Timestamp is not checked for overflow, and this is intentionally done
      * for simplifying the code:
-     * - the timestamp will overflow in ~10 nonillion (US) years (10,783,118,943,836,478,994,022,445,749,252), and
+     * - the timestamp will overflow in ~10 nonillion (US) years
+     *   (10,783,118,943,836,478,994,022,445,749,252), and
      * - the timestamp is not critical, the Oracle and Client can work well
      *   even if the timstamp is wrong.
      *
@@ -255,8 +257,8 @@ interface IBaseAMLOracle {
     /**
      * @dev Ask AML status as a Client.
      *
-     * Client can use this function to ask an {AMLStatus} for an arbitrary address.
-     * Asking is a part of the request process.
+     * Client can use this function to ask an {AMLStatus} for an arbitrary
+     * address. Asking is a part of the request process.
      *
      * No actual state change is done here to save gas: the only objective
      * is to notify the Oracle Operator via an EVM event to prepare AML status
@@ -289,6 +291,10 @@ interface IBaseAMLOracle {
      *
      * Anyone with a balance for the fee can call this function: no boarding
      * needed.
+     *
+     * If the maxFee is **not set** (maxFee == 0), the price must be verified
+     * during this very transaction, in order to avoid transaction ordering
+     * attacks.
      *
      * On successful execution, {AMLStatusFetched} EVM event is emitted.
      *
@@ -419,9 +425,9 @@ interface IBaseAMLOracle {
      * @dev This function provides the total amount of assets to
      * {BaseAMLOracle} and others interested of Oracle's total asset balance.
      *
-     * This differs from the {BaseAMLOracle-_totalDeposits}: unlike _totalDeposits, this
-     * value can be forcefully increased, hence it must be higher or equal to
-     * _totalDeposits.
+     * This differs from the {BaseAMLOracle-_totalDeposits}: unlike
+     * _totalDeposits, this value can be forcefully increased, hence it must be
+     * higher or equal to _totalDeposits.
      *
      * @return balance Oracle's current total balance
      */

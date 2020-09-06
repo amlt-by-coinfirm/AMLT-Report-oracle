@@ -47,6 +47,8 @@ contract RecoverTokens is AccessControl {
     /**
      * @dev Recover tokens accidentally sent to this contract.
      *
+     * On successful execution, {RecoveredTokens} EVM event is emitted.
+     *
      * @param token The token to recover
      */
     function recoverTokens(IERC20 token) public {

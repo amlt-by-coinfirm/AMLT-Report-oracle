@@ -6,13 +6,12 @@ import "./BaseAMLOracle.sol";
 import "./IETHOracle.sol";
 import "./RecoverTokens.sol";
 
+
 /**
  * @title ETHOracle - AML Oracle with Ether payments, inherits {BaseAMLOracle}
  * @author Ville Sundell <development@solarius.fi>
  * @dev This AML Oracle works with Ether, and is based on {BaseAMLOracle}.
  */
-
-
 contract ETHOracle is RecoverTokens, BaseAMLOracle, IETHOracle {
     using Address for address payable;
 

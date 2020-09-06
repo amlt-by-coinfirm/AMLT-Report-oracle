@@ -30,6 +30,11 @@ import "./IBaseAMLOracle.sol";
  * when handling complex data types. Setters and getters from OpenZeppelin's
  * contract encapsulation pattern also supports our pattern.
  *
+ * External functions are overridable: in the future it might be useful that
+ * the Oracle (contract inheriting this contract) can override external
+ * entrypoints.
+
+ *
  * We also implement a granular role-based access control by inheriting
  * {AccessControl}. Because we combine role-based access control with function
  * based access control, we use function names as our role names. Role check is
@@ -50,7 +55,8 @@ import "./IBaseAMLOracle.sol";
 abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
     using SafeMath for uint256; // Applicable only for uint256
 
-    /// @dev The core structure containing all the information for an AML Status
+    /// @dev The core structure containing all the information for an AML
+    /// status
     struct AMLStatus {
         bytes32 amlID;
         uint8 cScore;
@@ -59,7 +65,8 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
         uint256 fee;
     }
 
-    // Roles for our Role Based Access Control model which combines function based access control:
+    // Roles for our Role Based Access Control model which combines function
+    // based access control:
     bytes32 public constant SET_DEFAULT_FEE_ROLE = keccak256("setDefaultFee()");
     bytes32 public constant SET_FEE_ACCOUNT_ROLE = keccak256("setFeeAccount()");
     bytes32 public constant NOTIFY_ROLE = keccak256("notify()");
@@ -72,13 +79,15 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
 
     /// @dev All the {AMLStatus} entries reside here
     mapping (address => mapping (string => AMLStatus)) private _amlStatuses;
-    /// @dev Balance tracking for non-custodial and fee handling logic is done here
+    /// @dev Balance tracking for non-custodial and fee handling logic is done
+    /// here
     mapping (address => uint256) private _balances;
 
     /// @dev Primary purpose is to provide `assert()`s regarding our
     /// non-custodial logic a way to compare balances.
     uint256 private _totalDeposits;
-    /// @dev This is the account where the fees are paid upon `_fetchAMLStatus()`
+    /// @dev This is the account where the fees are paid upon
+    /// {_fetchAMLStatus}.
     address private _feeAccount;
     /// @dev We store default fee, so upon placing an {AMLStatus} on chain, we
     /// can save some gas by not setting the fee, if so desired.
@@ -116,7 +125,7 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
     function setDefaultFee(uint256 defaultFee_) external virtual override {
         require(hasRole(SET_DEFAULT_FEE_ROLE, msg.sender), "BaseAMLOracle: caller is not allowed to set the default fee");
 
-        emit DefaultFeeSet(_defaultFee, defaultFee_); // Omitting setter for consistency
+        emit DefaultFeeSet(_defaultFee, defaultFee_);
 
         _defaultFee = defaultFee_;
         assert(_defaultFee == defaultFee_);
@@ -129,7 +138,7 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
         require(hasRole(SET_FEE_ACCOUNT_ROLE, msg.sender), "BaseAMLOracle: caller is not allowed to set the fee account");
         require(feeAccount_ != address(0), "BaseAMLOracle: the fee account must not be 0x0");
 
-        emit FeeAccountSet(_feeAccount, feeAccount_); // Omitting setter for consistency
+        emit FeeAccountSet(_feeAccount, feeAccount_);
 
         _feeAccount = feeAccount_;
         assert(_feeAccount == feeAccount_);
@@ -152,7 +161,9 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
         require(hasRole(SET_AML_STATUS_ROLE, msg.sender), "BaseAMLOracle: caller is not allowed to set AML statuses");
         AMLStatus memory status;
 
-        // The timestamp is not critical
+        // The timestamp is not critical, so we can:
+        // - use block.timestamp, and
+        // - truncate it directly from uint256 to uint128.
         status = AMLStatus(amlID, cScore, flags, uint128(block.timestamp), fee);
         _setAMLStatus(client, target, status);
     }
@@ -276,6 +287,7 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
      * for this action
      * @param target The target address whose {AMLStatus} entry is going to be
      * set/updated
+     * @param status The {AMLStatus} being set or updated
      */
     function _setAMLStatus(address client, string calldata target, AMLStatus memory status) internal {
         require(client != address(0), "BaseAMLOracle: cannot set AML status for 0x0");
@@ -287,6 +299,14 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
         emit AMLStatusSet(client, target);
     }
 
+    /**
+     * @dev Internal function to delete an {AMLStatus}.
+     *
+     * @param client Client smart contract whose AML status database is used
+     * for this action
+     * @param target The target address whose {AMLStatus} entry is going to be
+     * deleted
+     */
     function _deleteAMLStatus(address client, string calldata target) internal {
         require(client != address(0), "BaseAMLOracle: cannot delete AML status for 0x0");
         require(_getStringLength(target) > 0, "BaseAMLOracle: target must not be an empty string");

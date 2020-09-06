@@ -77,7 +77,7 @@ contract AMLTOracle is RecoverTokens, BaseAMLOracle, IAMLTOracle {
      *
      * This is an auxiliary function provided for convenience, and for building
      * innovative workflows. fetchAMLStatus() is the primary way to fetch
-     * AML statuses. This is relatively heavy weight process.
+     * AML statuses. This is a relatively heavy weight process.
      */
     function fetchAMLStatusForAMLT(uint256 fee, string calldata target) external override returns (bytes32 amlID, uint8 cScore, uint120 flags) {
         _transferHere(msg.sender, fee); // Checks-Effects-Interactions!
@@ -98,9 +98,9 @@ contract AMLTOracle is RecoverTokens, BaseAMLOracle, IAMLTOracle {
      * @dev This function provides the total amount of assets to
      * {BaseAMLOracle} and others interested of Oracle's total asset balance.
      *
-     * This differs from the {BaseAMLOracle-_totalDeposits}: unlike _totalDeposits, this
-     * value can be forcefully increased, hence it must be higher or equal to
-     * _totalDeposits.
+     * This differs from the {BaseAMLOracle-_totalDeposits}: unlike
+     * _totalDeposits, this value can be forcefully increased, hence it must be
+     * higher or equal to _totalDeposits.
      *
      * @return balance Oracle's current total balance
      */

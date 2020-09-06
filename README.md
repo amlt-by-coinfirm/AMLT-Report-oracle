@@ -14,6 +14,11 @@ Also a Dockerfile is provided as a template for a development environment.
 
 We also use this particular [`solidity-docgen`](https://github.com/villesundell/solidity-docgen), `ethlint` and `ganache`.
 
+## Audits
+The code is not audited yet, but must be audited before its use in production.
+
+The audit should cover only [`contracts/`](contracts/) without its subdirectories.
+
 ## Design choices
 
 **We name each return type**: we need to return a struct-alike for metadata and the AML status, and those should be named variables just for clarity. So for consistency and clarity, we name all the return variables we use. Also fits well to the new NatSpec addition of multiple return variables. We still use "return" to follow OpenZeppelin convention at the same time.
@@ -26,9 +31,7 @@ We also use this particular [`solidity-docgen`](https://github.com/villesundell/
 
 **AML status is not encrypted on-chain**: the statuses are meant to be read and used by smart contract autonomously, so encryption cannot be used.
 
-**NatSpec style combines traditional and OpenZeppelin approach**: this way we get best of the both worlds, semantic documentation, and consistency with OpenZeppelin codebase. We use `@notice` once unconventionally: we believe that it emphasizes the importance.
-
-**External functions in BaseAMLOracle are overridable**: in the future it might be useful that the Oracle can override external entrypoints.
+**NatSpec style combines traditional and OpenZeppelin approach**: this way we get best of the both worlds, semantic documentation, and consistency with OpenZeppelin codebase. We use `@notice` once unconventionally: we believe that it emphasizes the importance. We also combine OpenZeppelin's commenting style for non-public variables ("//") with NatSpec's convention of ("/// @").
 
 **No formal verification**: formal verification would be useless with projects of one author, since someone else should do the specification.
 
@@ -42,17 +45,20 @@ We also use this particular [`solidity-docgen`](https://github.com/villesundell/
 
 **Require strategy**: we verify user provided input for undesired default values (such as `address(0)`), and provide a human readable error message for easier troubleshooting.
 
+**We follow OpenZeppelin's coding style and conventions**: since we are heavily utilizing OpenZeppelin, it makes sense to follow their coding style and conventions for consistency.
 
+**RecoverTokens and AccessControl not exposed to the client smart contracts**: interfaces provided to third parties does not expose RecoverTokens nor AccessControl for simplicity. Client smart contracts should not need these functions, since these are only for the Oracle Operator.
 
-  * ETHOracle and AMLTOracle inherit RecoverTokens separately, it's their job
-  * We combine OpenZeppelin's commenting style for non-public variables ("//") with NatSpec ("/// @")
-  * Terms: client / client smart contract, AML status / AMLStatus
-  * external->internal(calldata) pattern
-  * Audits should cover contracts/*.sol only
-  * Terminology: client/user, clinet/account, owner/operator/admin, etc.
-  * No problems with transaction ordering: mainly intended to be used inside the same transaction
-  * RecoverToken is not interface'd: not meant for end user, only admin use only. Same with RBAC
-  * Truffle takes care of versioning
-  * AMLTOracle not inheriting a general EIP-20 Oracle: no need, too messy
-  * Timestamp not critical
-  * Externals in AMLT and ETH Oracles are not overridable
+**ETHOracle and AMLTOracle inherit RecoverTokens**: the token recovery functionality can be thought as a feature of the oracle itself. Hence it's not inherited by the BaseAMLOracle.
+
+**We rely on Truffle's versioning**: instead of implementing our own versioning, we use Truffle's migrations to keep accounts of versions.
+
+**External/internal design pattern**: +calldata
+
+**DEFAULT_ADMIN_ROLE must be transferred manually**:
+
+**Externals in AMLTOracle and ETHOracle are not overridable**:
+
+**Transaction ordering is taken into account (security)**: most of the function calls are designed to be used within the same transaction (such as `getAMLStatusMetadata()` and `fetchAMLStatus()`), so transaction ordering is not a security problem. Also, `fetchAMLStatus()` with the optional `maxFee` can be used if desired. See the documentation for more details.
+
+  * Terminology: client/user, clinet/account, owner/operator/admin, etc. client / client smart contract, AML status / AMLStatus
