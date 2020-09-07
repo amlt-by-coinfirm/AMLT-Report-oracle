@@ -31,7 +31,7 @@ contract("AMLTOracle", async accounts => {
       await AMLTOracle.revokeRole(web3.utils.soliditySha3('recoverTokens()'), accounts[0]);
       await truffleAssert.reverts(
         AMLTOracle.recoverTokens(TestToken1Contract.address),
-        "RecoverTokens: caller is not allowed to recover tokens"
+        "RecoverTokens: the caller is not allowed to recover tokens"
       );
       await AMLTOracle.grantRole(web3.utils.soliditySha3('recoverTokens()'), accounts[0]);
       await truffleAssert.reverts(

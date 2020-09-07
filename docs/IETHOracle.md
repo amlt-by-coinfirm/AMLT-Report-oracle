@@ -2,7 +2,7 @@
 
 
 
-
+This AML Oracle works with Ether, and inherits {BaseAMLOracle}.
 
 
 ### `donateETH(address account)` (external)

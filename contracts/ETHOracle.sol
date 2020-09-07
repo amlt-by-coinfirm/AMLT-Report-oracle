@@ -10,7 +10,7 @@ import "./RecoverTokens.sol";
 /**
  * @title ETHOracle - AML Oracle with Ether payments, inherits {BaseAMLOracle}
  * @author Ville Sundell <development@solarius.fi>
- * @dev This AML Oracle works with Ether, and is based on {BaseAMLOracle}.
+ * @dev This AML Oracle works with Ether, and inherits {BaseAMLOracle}.
  */
 contract ETHOracle is RecoverTokens, BaseAMLOracle, IETHOracle {
     using Address for address payable;
@@ -67,11 +67,11 @@ contract ETHOracle is RecoverTokens, BaseAMLOracle, IETHOracle {
 
     /**
      * @dev This function provides the total amount of assets to
-     * {BaseAMLOracle} and others interested of Oracle's total asset balance.
+     * {BaseAMLOracle} and others interested in Oracle's total asset balance.
      *
-     * This differs from the {BaseAMLOracle-_totalDeposits}: unlike _totalDeposits, this
-     * value can be forcefully increased, hence it must be higher or equal to
-     * _totalDeposits.
+     * This differs from the {BaseAMLOracle-_totalDeposits}: unlike
+     * _totalDeposits, this value can be forcefully increased, hence it must be
+     * higher or equal to _totalDeposits.
      *
      * @return balance Oracle's current total balance
      */

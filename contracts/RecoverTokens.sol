@@ -47,12 +47,16 @@ contract RecoverTokens is AccessControl {
     /**
      * @dev Recover tokens accidentally sent to this contract.
      *
+     * This function is protected by our Role Based Access Control, and the
+     * caller must have the role {RECOVER_TOKENS_ROLE}. By default the `admin`
+     * has this role.
+     *
      * On successful execution, {RecoveredTokens} EVM event is emitted.
      *
      * @param token The token to recover
      */
     function recoverTokens(IERC20 token) public {
-        require(hasRole(RECOVER_TOKENS_ROLE, msg.sender), "RecoverTokens: caller is not allowed to recover tokens");
+        require(hasRole(RECOVER_TOKENS_ROLE, msg.sender), "RecoverTokens: the caller is not allowed to recover tokens");
 
         uint256 amount = _tokensToBeRecovered(token);
         require(amount > 0, "RecoverTokens: must recover a positive amount");
@@ -68,7 +72,7 @@ contract RecoverTokens is AccessControl {
     /**
      * @dev Function to determine how many tokens to recover.
      *
-     * This can be overriden by the parent contract, so tokens which should
+     * This can be overridden by the parent contract, so tokens which should
      * reside in this contract, would not be recovered.
      *
      * @param token The token to recover

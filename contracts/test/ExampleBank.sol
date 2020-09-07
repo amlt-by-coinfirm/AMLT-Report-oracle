@@ -58,7 +58,9 @@ contract ExampleBank {
 
         balances[msg.sender] -= amount;
 
-        msg.sender.call{value: amount}("");
+        (bool success, ) = msg.sender.call{value: amount}("");
+
+        require(success, "ExampleBank: ether transfer was not successful");
 
         if (balances[msg.sender] == 0) {
             // Terminating relationship

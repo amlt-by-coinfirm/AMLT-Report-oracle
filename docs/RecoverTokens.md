@@ -22,6 +22,9 @@ recoverer (and role admin).
 
 
 Recover tokens accidentally sent to this contract.
+This function is protected by our Role Based Access Control, and the
+caller must have the role {RECOVER_TOKENS_ROLE}. By default the `admin`
+has this role.
 On successful execution, {RecoveredTokens} EVM event is emitted.
 
 
@@ -30,7 +33,7 @@ On successful execution, {RecoveredTokens} EVM event is emitted.
 
 
 Function to determine how many tokens to recover.
-This can be overriden by the parent contract, so tokens which should
+This can be overridden by the parent contract, so tokens which should
 reside in this contract, would not be recovered.
 
 

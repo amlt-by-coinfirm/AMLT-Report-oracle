@@ -5,10 +5,10 @@
 This AML Oracle works with AMLT tokens, and is based on
 {BaseAMLOracle}.
 This is specific to AMLT token contract, and hence is not a generic
-ERC-20 implementation. That's why we use try/catch pattern only on
-occassions where we know the token contract could revert().
+ERC-20 implementation. That's why we use the try/catch pattern only on
+occasions where we know the token contract could revert().
 AMLT token contract is a trusted contract, so following
-Checks-Effects-Interactions pattern here would overly compilcate things.
+Checks-Effects-Interactions pattern here would overly complicate things.
 
 
 ### `constructor(address admin, uint256 defaultFee, contract IERC20 amlToken_)` (public)
@@ -57,7 +57,7 @@ See {IAMLTOracle-getAMLToken}.
 
 
 This function provides the total amount of assets to
-{BaseAMLOracle} and others interested of Oracle's total asset balance.
+{BaseAMLOracle} and others interested in Oracle's total asset balance.
 This differs from the {BaseAMLOracle-_totalDeposits}: unlike
 _totalDeposits, this value can be forcefully increased, hence it must be
 higher or equal to _totalDeposits.

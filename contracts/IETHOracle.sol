@@ -4,6 +4,11 @@ pragma solidity ^0.7.0; // See README.md's section "Solidity version"
 import "./IBaseAMLOracle.sol";
 
 
+/**
+ * @title ETHOracle - AML Oracle with Ether payments, inherits {BaseAMLOracle}
+ * @author Ville Sundell <development@solarius.fi>
+ * @dev This AML Oracle works with Ether, and inherits {BaseAMLOracle}.
+ */
 interface IETHOracle is IBaseAMLOracle {
     /**
      * @dev Donating Ether to an account internally.

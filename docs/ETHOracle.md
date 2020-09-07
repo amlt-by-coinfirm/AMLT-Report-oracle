@@ -2,7 +2,7 @@
 
 
 
-This AML Oracle works with Ether, and is based on {BaseAMLOracle}.
+This AML Oracle works with Ether, and inherits {BaseAMLOracle}.
 
 
 ### `constructor(address admin, uint256 defaultFee)` (public)
@@ -48,10 +48,10 @@ See {IETHOracle-fetchAMLStatusForETH} and
 
 
 This function provides the total amount of assets to
-{BaseAMLOracle} and others interested of Oracle's total asset balance.
-This differs from the {BaseAMLOracle-_totalDeposits}: unlike _totalDeposits, this
-value can be forcefully increased, hence it must be higher or equal to
-_totalDeposits.
+{BaseAMLOracle} and others interested in Oracle's total asset balance.
+This differs from the {BaseAMLOracle-_totalDeposits}: unlike
+_totalDeposits, this value can be forcefully increased, hence it must be
+higher or equal to _totalDeposits.
 
 
 ### `getInterfaceHash() → bytes32 interfaceHash` (public)

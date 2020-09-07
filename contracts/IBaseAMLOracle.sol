@@ -2,6 +2,41 @@
 pragma solidity ^0.7.0; // See README.md's section "Solidity version"
 
 
+/**
+ * @title BaseAMLOracle - the abstract base contract for developing AML Oracles
+ * @author Ville Sundell <development@solarius.fi>
+ * @dev This is the base contract for developing AML Oracles. AML Oracles
+ * itself will consist of two parts:
+ *  - payment logic implemented by the AML Oracle itself, and
+ *  - rest of the AML Oracle logic, including AML Status handling and
+ *    non-custodial logic implemented in this contract.
+ *
+ * This contract covers:
+ *  - non-custodial logic,
+ *  - AML Status handling logic, and
+ *  - fee handling.
+ *
+ * External functions are overridable: in the future it might be useful that
+ * the Oracle (contract inheriting this contract) can override external
+ * entry points.
+ *
+ * We also implement a granular role-based access control by inheriting
+ * {AccessControl}. Because we combine role-based access control with function
+ * based access control, we use function names as our role names. Role check is
+ * done in `external` functions, where applicable.
+ *
+ * Although our access control model is consistently function based, there is
+ * one exception: FORCE_WITHDRAW_ROLE which can be used to skip the `assert()`
+ * upon withdrawal if there is ever such need.
+ *
+ * NOTE: Role `DEFAULT_ADMIN_ROLE` makes an admin, the account having this role
+ * can freely grant and revoke any role to/from any account. For more
+ * information on access control, see:
+ * https://docs.openzeppelin.com/contracts/2.x/access-control.
+ *
+ * At first the *Oracle Operator* is the *Admin*, but later the Operator can
+ * assign various other actors to various roles.
+ */
 interface IBaseAMLOracle {
     /**
      * @dev Emitted when default fee is set/changed.
@@ -23,7 +58,7 @@ interface IBaseAMLOracle {
     event DefaultFeeSet(uint256 oldDefaultFee, uint256 newDefaultFee);
 
     /**
-     * @dev Emitted when the account where to fee will be paid, is changed.
+     * @dev Emitted when the account where the fee will be paid, is changed.
      *
      * Although it might make sense first to specify also the setter (because
      * of our Role Based Access Control there might be multiple), but in the
@@ -77,7 +112,7 @@ interface IBaseAMLOracle {
     event AMLStatusDeleted(address indexed client, string target);
 
     /**
-     * @dev Emitted when client smart contract ask an AML status for an
+     * @dev Emitted when the client smart contract asks for an AML status for an
      * address to be placed on-chain by the Oracle Operator.
      *
      * @param client Client smart contract asking the AML status
@@ -115,7 +150,7 @@ interface IBaseAMLOracle {
     event Donated(address indexed donor, address indexed account, uint256 amount);
 
     /**
-     * @dev Emitted when an account deposit funds to itself.
+     * @dev Emitted when an account deposits funds to itself.
      *
      * @param account The address of the account making the deposit
      * @param amount Amount of funds in the smallest denominator
@@ -195,9 +230,9 @@ interface IBaseAMLOracle {
      * specific client as the Oracle Operator.
      *
      * The Oracle Operator can use this to set an arbitrary AML status for
-     * an arbitrary address for an arbitrary client. The client might, or might
-     * not, have requested the AML status. Client might, or might not, fetch
-     * this AML status. If an AML status is already present on-chain, the
+     * an arbitrary address for an arbitrary client. The clients might, or
+     * might not, have requested the AML status. Client might, or might not,
+     * fetch this AML status. If an AML status is already present on-chain, the
      * status will be updated.
      *
      * Timestamp is not checked for overflow, and this is intentionally done
@@ -205,7 +240,7 @@ interface IBaseAMLOracle {
      * - the timestamp will overflow in ~10 nonillion (US) years
      *   (10,783,118,943,836,478,994,022,445,749,252), and
      * - the timestamp is not critical, the Oracle and Client can work well
-     *   even if the timstamp is wrong.
+     *   even if the timestamp is wrong.
      *
      * The cScore is enforced to contain values between 0 - 99 so the Client
      * can always trust that the range is fixed.
@@ -257,14 +292,14 @@ interface IBaseAMLOracle {
     /**
      * @dev Ask AML status as a Client.
      *
-     * Client can use this function to ask an {AMLStatus} for an arbitrary
+     * Clients can use this function to ask an {AMLStatus} for an arbitrary
      * address. Asking is a part of the request process.
      *
      * No actual state change is done here to save gas: the only objective
      * is to notify the Oracle Operator via an EVM event to prepare AML status
      * for the Client.
      *
-     * Anyone can call this function: its up to the Oracle Operator to arrange
+     * Anyone can call this function: it's up to the Oracle Operator to arrange
      * spam prevention mechanisms. There are no conditions whatsoever on
      * calling this function.
      *
@@ -320,8 +355,8 @@ interface IBaseAMLOracle {
      *
      * Anyone can call this to fetch metadata (`timestamp` and `fee`) regarding
      * an {AMLStatus} of any address of any Client: we don't consider this
-     * information to be secret, and its possible that the Client is consisting
-     * of multiple smart contracts.
+     * information to be secret, and it's possible that the Client is
+     * consisting of multiple smart contracts.
      *
      * @param client Client in whose database the desired {AMLStatus} entry
      * resides
@@ -334,13 +369,13 @@ interface IBaseAMLOracle {
     function getAMLStatusMetadata(address client, string calldata target) external view returns (uint256 timestamp, uint256 fee);
 
     /**
-     * Like {getAMLStatusMetadata} above, but presuming `client` to be the
+     * Like {getAMLStatusMetadata} above, but presuming the `client` to be the
      * caller.
      */
     function getAMLStatusMetadata(string calldata target) external view returns (uint256 timestamp, uint256 fee);
 
     /**
-     * @dev Client can query the timestamp only, if so desired.
+     * @dev Clients can query the timestamp only, if so desired.
      *
      * @param client Client smart contract whose AML status database is used
      * for this query
@@ -360,7 +395,7 @@ interface IBaseAMLOracle {
      * convenience, as a way to build alternative processes, if desired so.
      *
      * If you are using this function, please keep in mind that the fee can be
-     * 0 in two occassions:
+     * 0 in two occasions:
      * - there is no such {AMLStatus} entry, or
      * - default fee is used instead of per query fee.
      *
@@ -423,7 +458,7 @@ interface IBaseAMLOracle {
 
     /**
      * @dev This function provides the total amount of assets to
-     * {BaseAMLOracle} and others interested of Oracle's total asset balance.
+     * {BaseAMLOracle} and others interested in Oracle's total asset balance.
      *
      * This differs from the {BaseAMLOracle-_totalDeposits}: unlike
      * _totalDeposits, this value can be forcefully increased, hence it must be

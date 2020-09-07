@@ -2,7 +2,31 @@
 
 
 
-
+This is the base contract for developing AML Oracles. AML Oracles
+itself will consist of two parts:
+- payment logic implemented by the AML Oracle itself, and
+- rest of the AML Oracle logic, including AML Status handling and
+non-custodial logic implemented in this contract.
+This contract covers:
+- non-custodial logic,
+- AML Status handling logic, and
+- fee handling.
+External functions are overridable: in the future it might be useful that
+the Oracle (contract inheriting this contract) can override external
+entry points.
+We also implement a granular role-based access control by inheriting
+{AccessControl}. Because we combine role-based access control with function
+based access control, we use function names as our role names. Role check is
+done in `external` functions, where applicable.
+Although our access control model is consistently function based, there is
+one exception: FORCE_WITHDRAW_ROLE which can be used to skip the `assert()`
+upon withdrawal if there is ever such need.
+NOTE: Role `DEFAULT_ADMIN_ROLE` makes an admin, the account having this role
+can freely grant and revoke any role to/from any account. For more
+information on access control, see:
+https://docs.openzeppelin.com/contracts/2.x/access-control.
+At first the *Oracle Operator* is the *Admin*, but later the Operator can
+assign various other actors to various roles.
 
 
 ### `setDefaultFee(uint256 defaultFee_)` (external)
@@ -60,16 +84,16 @@ On successful execution, {Notified} EVM event is emitted.
 Setting/updating the AML status for a specific address for a
 specific client as the Oracle Operator.
 The Oracle Operator can use this to set an arbitrary AML status for
-an arbitrary address for an arbitrary client. The client might, or might
-not, have requested the AML status. Client might, or might not, fetch
-this AML status. If an AML status is already present on-chain, the
+an arbitrary address for an arbitrary client. The clients might, or
+might not, have requested the AML status. Client might, or might not,
+fetch this AML status. If an AML status is already present on-chain, the
 status will be updated.
 Timestamp is not checked for overflow, and this is intentionally done
 for simplifying the code:
 - the timestamp will overflow in ~10 nonillion (US) years
 (10,783,118,943,836,478,994,022,445,749,252), and
 - the timestamp is not critical, the Oracle and Client can work well
-even if the timstamp is wrong.
+even if the timestamp is wrong.
 The cScore is enforced to contain values between 0 - 99 so the Client
 can always trust that the range is fixed.
 This function is protected by our Role Based Access Control, and the
@@ -99,12 +123,12 @@ On successful execution, {AMLStatusDeleted} EVM event is emitted.
 
 
 Ask AML status as a Client.
-Client can use this function to ask an {AMLStatus} for an arbitrary
+Clients can use this function to ask an {AMLStatus} for an arbitrary
 address. Asking is a part of the request process.
 No actual state change is done here to save gas: the only objective
 is to notify the Oracle Operator via an EVM event to prepare AML status
 for the Client.
-Anyone can call this function: its up to the Oracle Operator to arrange
+Anyone can call this function: it's up to the Oracle Operator to arrange
 spam prevention mechanisms. There are no conditions whatsoever on
 calling this function.
 On successful execution, {AMLStatusAsked} EVM event is emitted.
@@ -141,13 +165,13 @@ Like {fetchAMLStatus} above, but with unlimited fees.
 Get metadata regarding an {AMLStatus}.
 Anyone can call this to fetch metadata (`timestamp` and `fee`) regarding
 an {AMLStatus} of any address of any Client: we don't consider this
-information to be secret, and its possible that the Client is consisting
-of multiple smart contracts.
+information to be secret, and it's possible that the Client is
+consisting of multiple smart contracts.
 
 
 ### `getAMLStatusMetadata(string target) → uint256 timestamp, uint256 fee` (external)
 
-Like {getAMLStatusMetadata} above, but presuming `client` to be the
+Like {getAMLStatusMetadata} above, but presuming the `client` to be the
 caller.
 
 
@@ -156,7 +180,7 @@ caller.
 
 
 
-Client can query the timestamp only, if so desired.
+Clients can query the timestamp only, if so desired.
 
 
 ### `getAMLStatusFee(address client, string target) → uint256 fee` (external)
@@ -169,7 +193,7 @@ of the documentation carefully!
 This function is provided only for client smart contract's
 convenience, as a way to build alternative processes, if desired so.
 If you are using this function, please keep in mind that the fee can be
-0 in two occassions:
+0 in two occasions:
 - there is no such {AMLStatus} entry, or
 - default fee is used instead of per query fee.
 {getAMLStatusMetadata} is the preferred way to access both, fee and
@@ -219,7 +243,7 @@ The way to get total deposited funds.
 
 
 This function provides the total amount of assets to
-{BaseAMLOracle} and others interested of Oracle's total asset balance.
+{BaseAMLOracle} and others interested in Oracle's total asset balance.
 This differs from the {BaseAMLOracle-_totalDeposits}: unlike
 _totalDeposits, this value can be forcefully increased, hence it must be
 higher or equal to _totalDeposits.
@@ -254,7 +278,7 @@ Zero fees are intentionally supported as the default fee.
 
 
 
-Emitted when the account where to fee will be paid, is changed.
+Emitted when the account where the fee will be paid, is changed.
 Although it might make sense first to specify also the setter (because
 of our Role Based Access Control there might be multiple), but in the
 end that's not relevant information during normal operation. If some day
@@ -297,7 +321,7 @@ subsequently removed.
 
 
 
-Emitted when client smart contract ask an AML status for an
+Emitted when the client smart contract asks for an AML status for an
 address to be placed on-chain by the Oracle Operator.
 
 
@@ -326,7 +350,7 @@ Emitted when an account receives a donation.
 
 
 
-Emitted when an account deposit funds to itself.
+Emitted when an account deposits funds to itself.
 
 
 ### `Withdrawn(address account, uint256 amount)`

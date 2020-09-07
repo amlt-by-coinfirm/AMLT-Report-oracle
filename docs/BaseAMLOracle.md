@@ -11,7 +11,7 @@ This contract covers:
 - non-custodial logic,
 - AML Status handling logic, and
 - fee handling.
-We follow modern OpenZeppelin design pattern on contract encapsulation,
+We follow the modern OpenZeppelin design pattern on contract encapsulation,
 that's why we are using mainly `private` state variables with `internal`
 setters and getters.
 We also implement our own design pattern where client smart contract
@@ -21,7 +21,7 @@ when handling complex data types. Setters and getters from OpenZeppelin's
 contract encapsulation pattern also supports our pattern.
 External functions are overridable: in the future it might be useful that
 the Oracle (contract inheriting this contract) can override external
-entrypoints.
+entry points.
 We also implement a granular role-based access control by inheriting
 {AccessControl}. Because we combine role-based access control with function
 based access control, we use function names as our role names. Role check is
@@ -29,8 +29,10 @@ done in `external` functions, where applicable.
 Although our access control model is consistently function based, there is
 one exception: FORCE_WITHDRAW_ROLE which can be used to skip the `assert()`
 upon withdrawal if there is ever such need.
-NOTE: DEFAULT_ADMIN_ROLE is not revoked automatically so further
-administrative actions can be taken, and must be revoked manually!
+NOTE: Role `DEFAULT_ADMIN_ROLE` makes an admin, the account having this role
+can freely grant and revoke any role to/from any account. For more
+information on access control, see:
+https://docs.openzeppelin.com/contracts/2.x/access-control.
 At first the *Oracle Operator* is the *Admin*, but later the Operator can
 assign various other actors to various roles.
 
@@ -41,8 +43,6 @@ assign various other actors to various roles.
 
 Constructor sets up the Role Based Access Control, and sets the
 initial _feeAccount to `admin`.
-NOTE: DEFAULT_ADMIN_ROLE is not revoked automatically so further
-administrative actions can be taken, and must be revoked manually!
 
 
 ### `setDefaultFee(uint256 defaultFee_)` (external)
@@ -217,7 +217,7 @@ to `memory` for cheaper handling.
 
 
 
-Determine fee for this particual {AMLStatus} query.
+Determine fee for this particular {AMLStatus} query.
 The fee can be unique for each {AMLStatus} query. Default fee can be
 also used, in order to save gas while placing the status on-chain.
 

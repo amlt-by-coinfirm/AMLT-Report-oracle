@@ -28,7 +28,7 @@ contract("ETHOracle", async accounts => {
     it("Try to get non-existent AML Status Metadata", async () => {
       await truffleAssert.reverts(
         ETHOracle.getAMLStatusMetadata("bogusaddress"),
-        "BaseAMLOracle: no such AML Status"
+        "BaseAMLOracle: no such AML status"
       );
     });
 
@@ -42,7 +42,7 @@ contract("ETHOracle", async accounts => {
     it("Trying to fetch AML status for 'bogusaddress'", async () => {
       await truffleAssert.reverts(
         ETHOracle.fetchAMLStatus(100, "bogusaddress"),
-        "BaseAMLOracle: no such AML Status"
+        "BaseAMLOracle: no such AML status"
       );
     });
 
@@ -57,7 +57,7 @@ contract("ETHOracle", async accounts => {
       await ETHOracle.setAMLStatus(accounts[0], "realaddress", web3.utils.fromAscii("123456789"), 99, 0x1, 123),
       await truffleAssert.reverts(
         ETHOracle.fetchAMLStatus(100, "realaddress"),
-        "BaseAMLOracle: required fee is greater than the maximum specified fee"
+        "BaseAMLOracle: the required fee is greater than the specified maximum fee"
       );
     });
 
@@ -107,7 +107,7 @@ contract("ETHOracle", async accounts => {
     it("Use cScore above 99", async () => {
       await truffleAssert.reverts(
         ETHOracle.setAMLStatus(accounts[0], "bogusaddress", web3.utils.fromAscii("123456789"), 123, 0x1, 123),
-        "BaseAMLOracle: The cScore must be between 0 and 99"
+        "BaseAMLOracle: the cScore must be between 0 and 99"
       );
     });
 
@@ -142,7 +142,7 @@ contract("ETHOracle", async accounts => {
     it("Trying to donate for a client not accepting donations", async () => {
       await truffleAssert.reverts(
         ETHOracle.donateETH(accounts[0], {from: accounts[0], value: 1}),
-        "BaseAMLOracle: account does not accept donations"
+        "BaseAMLOracle: the account does not accept donations"
       );
     });
 
@@ -159,42 +159,42 @@ contract("ETHOracle", async accounts => {
     it("setDefaultFee()", async () => {
       await truffleAssert.reverts(
         ETHOracle.setDefaultFee(0, {from:accounts[1]}),
-        "BaseAMLOracle: caller is not allowed to set the default fee"
+        "BaseAMLOracle: the caller is not allowed to set the default fee"
       );
     });
 
     it("setFeeAccount()", async () => {
       await truffleAssert.reverts(
         ETHOracle.setFeeAccount("0x0000000000000000000000000000000000000000", {from:accounts[1]}),
-        "BaseAMLOracle: caller is not allowed to set the fee account"
+        "BaseAMLOracle: the caller is not allowed to set the fee account"
       );
     });
 
     it("notify()", async () => {
       await truffleAssert.reverts(
         ETHOracle.notify(accounts[0], "bogus message", {from:accounts[1]}),
-        "BaseAMLOracle: caller is not allowed to notify the clients"
+        "BaseAMLOracle: the caller is not allowed to notify the clients"
       );
     });
 
     it("setAMLStatus()", async () => {
       await truffleAssert.reverts(
         ETHOracle.setAMLStatus(accounts[0], "bogusaddress", web3.utils.fromAscii("123456789"), 11, 0x1, 123, {from:accounts[1]}),
-        "BaseAMLOracle: caller is not allowed to set AML statuses"
+        "BaseAMLOracle: the caller is not allowed to set AML statuses"
       );
     });
 
     it("deleteAMLStatus()", async () => {
       await truffleAssert.reverts(
         ETHOracle.deleteAMLStatus(accounts[0], "bogusaddress", {from:accounts[1]}),
-        "BaseAMLOracle: caller is not allowed to delete AML statuses"
+        "BaseAMLOracle: the caller is not allowed to delete AML statuses"
       );
     });
 
     it("recoverTokens()", async () => {
       await truffleAssert.reverts(
         ETHOracle.recoverTokens(accounts[0], {from:accounts[1]}),
-        "RecoverTokens: caller is not allowed to recover tokens"
+        "RecoverTokens: the caller is not allowed to recover tokens"
       );
     });
   });

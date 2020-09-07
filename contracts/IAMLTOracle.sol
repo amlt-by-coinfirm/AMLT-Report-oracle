@@ -38,8 +38,8 @@ interface IAMLTOracle is IBaseAMLOracle {
     /**
      * @dev Deposit AMLT to an account internally.
      *
-     * This function transfers `amount` of tokens from the caller to caller's
-     * internal balance for paying fees in the future.
+     * This function transfers the `amount` of tokens from the caller to
+     * caller's internal balance for paying fees in the future.
      *
      * Before calling this function, the account must have called {_amlToken}'s
      * {IERC20-approve} approving this Oracle to access their tokens.
@@ -54,7 +54,7 @@ interface IAMLTOracle is IBaseAMLOracle {
     /**
      * @dev Withdraw AMLT tokens from caller's internal balance.
      *
-     * Will withdraw `amount` of AMLT tokens from caller's internal balance
+     * Will withdraw an `amount` of AMLT tokens from caller's internal balance
      * to the caller themselves using {IERC20-transfer}.
      *
      * On successful execution, {Withdrawn} EVM event is emitted.
@@ -83,7 +83,8 @@ interface IAMLTOracle is IBaseAMLOracle {
      *
      * Since we are following OpenZeppelin's encapsulation design pattern,
      * each private state variable should have a getter, if meant to be used
-     * by third parties. This can be used to check the token is set correctly.
+     * by third parties. This can be used to check if the token is set
+     * correctly.
      *
      * @return token The {_amlToken}
      */

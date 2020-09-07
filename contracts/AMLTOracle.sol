@@ -15,11 +15,11 @@ import "./RecoverTokens.sol";
  * {BaseAMLOracle}.
  *
  * This is specific to AMLT token contract, and hence is not a generic
- * ERC-20 implementation. That's why we use try/catch pattern only on
- * occassions where we know the token contract could revert().
+ * ERC-20 implementation. That's why we use the try/catch pattern only on
+ * occasions where we know the token contract could revert().
  *
  * AMLT token contract is a trusted contract, so following
- * Checks-Effects-Interactions pattern here would overly compilcate things.
+ * Checks-Effects-Interactions pattern here would overly complicate things.
  */
 contract AMLTOracle is RecoverTokens, BaseAMLOracle, IAMLTOracle {
     using SafeMath for uint256; // Applicable only for uint256
@@ -39,6 +39,8 @@ contract AMLTOracle is RecoverTokens, BaseAMLOracle, IAMLTOracle {
      * tasks are done in {BaseAMLOracle}'s constructor.
      */
     constructor(address admin, uint256 defaultFee, IERC20 amlToken_) BaseAMLOracle(admin, defaultFee) RecoverTokens(admin) {
+        require(address(amlToken_) != address(0), "AMLTOracle: amlToken_ must not be 0x0");
+
         _amlToken = amlToken_;
     }
 
@@ -96,7 +98,7 @@ contract AMLTOracle is RecoverTokens, BaseAMLOracle, IAMLTOracle {
 
     /**
      * @dev This function provides the total amount of assets to
-     * {BaseAMLOracle} and others interested of Oracle's total asset balance.
+     * {BaseAMLOracle} and others interested in Oracle's total asset balance.
      *
      * This differs from the {BaseAMLOracle-_totalDeposits}: unlike
      * _totalDeposits, this value can be forcefully increased, hence it must be
@@ -115,14 +117,27 @@ contract AMLTOracle is RecoverTokens, BaseAMLOracle, IAMLTOracle {
         return ERC1820INTERFACEHASH;
     }
 
+    /**
+     * @dev Internal function for transferring tokens to this contract.
+     *
+     * For inbound traffic we use the {IERC20-approve}->{IERC20-transferFrom}
+     * pattern.
+     *
+     * @param from The adress which gave us allowance by calling `approve()`
+     * @param amount The amount to transfer
+     */
     function _transferHere(address from, uint256 amount) internal {
         try _amlToken.transferFrom(from, address(this), amount) {
             return;
         } catch {
-            revert("AMLTOracle: Token transferFrom() failed");
+            revert("AMLTOracle: token transferFrom() failed");
         }
     }
 
+    /**
+     * @dev Overriden function for telling RecoverTokens how many of _amlToken
+     * we can actually recover. See {RecoverTokens-_tokensToBeRecovered}.
+     */
     function _tokensToBeRecovered(IERC20 token) internal view override returns (uint256 amountToRecover) {
         if (address(token) == address(_amlToken)) {
             uint256 totalBalance = getTotalBalance();

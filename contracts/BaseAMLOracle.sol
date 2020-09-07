@@ -20,7 +20,7 @@ import "./IBaseAMLOracle.sol";
  *  - AML Status handling logic, and
  *  - fee handling.
  *
- * We follow modern OpenZeppelin design pattern on contract encapsulation,
+ * We follow the modern OpenZeppelin design pattern on contract encapsulation,
  * that's why we are using mainly `private` state variables with `internal`
  * setters and getters.
  *
@@ -32,7 +32,7 @@ import "./IBaseAMLOracle.sol";
  *
  * External functions are overridable: in the future it might be useful that
  * the Oracle (contract inheriting this contract) can override external
- * entrypoints.
+ * entry points.
  *
  * We also implement a granular role-based access control by inheriting
  * {AccessControl}. Because we combine role-based access control with function
@@ -43,8 +43,10 @@ import "./IBaseAMLOracle.sol";
  * one exception: FORCE_WITHDRAW_ROLE which can be used to skip the `assert()`
  * upon withdrawal if there is ever such need.
  *
- * NOTE: DEFAULT_ADMIN_ROLE is not revoked automatically so further
- * administrative actions can be taken, and must be revoked manually!
+ * NOTE: Role `DEFAULT_ADMIN_ROLE` makes an admin, the account having this role
+ * can freely grant and revoke any role to/from any account. For more
+ * information on access control, see:
+ * https://docs.openzeppelin.com/contracts/2.x/access-control.
  *
  * At first the *Oracle Operator* is the *Admin*, but later the Operator can
  * assign various other actors to various roles.
@@ -96,9 +98,6 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
      * @dev Constructor sets up the Role Based Access Control, and sets the
      * initial _feeAccount to `admin`.
      *
-     * NOTE: DEFAULT_ADMIN_ROLE is not revoked automatically so further
-     * administrative actions can be taken, and must be revoked manually!
-     *
      * @param admin The address which will initally be the superadmin, and part
      * of all the roles.
      * @param defaultFee_ The initial default fee, can be 0
@@ -122,7 +121,7 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
      * @dev See {IBaseAMLOracle-setDefaultFee}.
      */
     function setDefaultFee(uint256 defaultFee_) external virtual override {
-        require(hasRole(SET_DEFAULT_FEE_ROLE, msg.sender), "BaseAMLOracle: caller is not allowed to set the default fee");
+        require(hasRole(SET_DEFAULT_FEE_ROLE, msg.sender), "BaseAMLOracle: the caller is not allowed to set the default fee");
 
         emit DefaultFeeSet(_defaultFee, defaultFee_);
 
@@ -134,7 +133,7 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
      * @dev See {IBaseAMLOracle-setFeeAccount}.
      */
     function setFeeAccount(address feeAccount_) external virtual override {
-        require(hasRole(SET_FEE_ACCOUNT_ROLE, msg.sender), "BaseAMLOracle: caller is not allowed to set the fee account");
+        require(hasRole(SET_FEE_ACCOUNT_ROLE, msg.sender), "BaseAMLOracle: the caller is not allowed to set the fee account");
         require(feeAccount_ != address(0), "BaseAMLOracle: the fee account must not be 0x0");
 
         emit FeeAccountSet(_feeAccount, feeAccount_);
@@ -147,7 +146,7 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
      * @dev See {IBaseAMLOracle-notify}.
      */
     function notify(address client, string calldata message) external virtual override {
-        require(hasRole(NOTIFY_ROLE, msg.sender), "BaseAMLOracle: caller is not allowed to notify the clients");
+        require(hasRole(NOTIFY_ROLE, msg.sender), "BaseAMLOracle: the caller is not allowed to notify the clients");
         require(client != address(0), "BaseAMLOracle: client must not be 0x0");
 
         emit Notified(client, message);
@@ -157,7 +156,7 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
      * @dev See {IBaseAMLOracle-setAMLStatus}.
      */
     function setAMLStatus(address client, string calldata target, bytes32 amlID, uint8 cScore, uint120 flags, uint256 fee) external virtual override {
-        require(hasRole(SET_AML_STATUS_ROLE, msg.sender), "BaseAMLOracle: caller is not allowed to set AML statuses");
+        require(hasRole(SET_AML_STATUS_ROLE, msg.sender), "BaseAMLOracle: the caller is not allowed to set AML statuses");
         AMLStatus memory status;
 
         // The timestamp is not critical, so we can:
@@ -171,7 +170,7 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
      * @dev See {IBaseAMLOracle-deleteAMLStatus}.
      */
     function deleteAMLStatus(address client, string calldata target) external virtual override {
-        require(hasRole(DELETE_AML_STATUS_ROLE, msg.sender), "BaseAMLOracle: caller is not allowed to delete AML statuses");
+        require(hasRole(DELETE_AML_STATUS_ROLE, msg.sender), "BaseAMLOracle: the caller is not allowed to delete AML statuses");
 
         _deleteAMLStatus(client, target);
     }
@@ -291,7 +290,7 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
     function _setAMLStatus(address client, string calldata target, AMLStatus memory status) internal {
         require(client != address(0), "BaseAMLOracle: cannot set AML status for 0x0");
         require(_getStringLength(target) > 0, "BaseAMLOracle: target must not be an empty string");
-        require(status.cScore < 100, "BaseAMLOracle: The cScore must be between 0 and 99");
+        require(status.cScore < 100, "BaseAMLOracle: the cScore must be between 0 and 99");
 
         _amlStatuses[client][target] = status;
 
@@ -315,13 +314,23 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
         emit AMLStatusDeleted(client, target);
     }
 
+    /**
+     * @dev Internal getter for an {AMLStatus}. The status will be deleted
+     * after fetching.
+     *
+     * @param client Client smart contract whose AML status database is used
+     * for this action
+     * @param target The target address whose {AMLStatus} entry is going to be
+     * fetched
+     * @param maxFee Maximum fee the client is willing to pay for the fetch
+     */
     function _fetchAMLStatus(address client, string calldata target, uint256 maxFee) internal returns (bytes32 amlID, uint8 cScore, uint120 flags) {
         assert(client != address(0)); // Should never happen
         AMLStatus memory status = _getAMLStatusCopy(client, target);
         uint256 fee = _getFee(status);
 
         if (maxFee > 0 && fee > maxFee) {
-            revert("BaseAMLOracle: required fee is greater than the maximum specified fee");
+            revert("BaseAMLOracle: the required fee is greater than the specified maximum fee");
         }
 
         _balances[client] = _balances[client].sub(fee);
@@ -333,16 +342,38 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
         return (status.amlID, status.cScore, status.flags);
     }
 
+    /**
+     * @dev Accounting mechanism for donations.
+     *
+     * All donations must go through this function, so the destination
+     * account's willingness to accept donations can be checked via an ERC-1820
+     * interface implementation check.
+     *
+     * @param donor The account giving the donation
+     * @param account The account receiving the donation
+     * @param amount The amount of the donation
+     */
     function _donate(address donor, address account, uint256 amount) internal {
         assert(donor != address(0)); // Should never be 0x0
         address recipient = ERC1820REGISTRY.getInterfaceImplementer(account, getInterfaceHash());
-        require(recipient != address(0), "BaseAMLOracle: account does not accept donations");
+        require(recipient != address(0), "BaseAMLOracle: the account does not accept donations");
 
         _deposit(recipient, amount);
 
         emit Donated(donor, recipient, amount);
     }
 
+    /**
+     * @dev Internal mechanism for handling deposits in general (including
+     * donations).
+     *
+     * This will be also invoked by _donate() in addition to the oracle (when
+     * doing a normal deposit).
+     *
+     * @param account Account whose balance will be increased
+     * @param amount How much the internal balance of the `account` will be
+     * increased
+     */
     function _deposit(address account, uint256 amount) internal {
         assert(account != address(0)); // Should never be 0x0
         require(amount > 0, "BaseAMLOracle: amount to deposit must be greater than 0");
@@ -354,6 +385,12 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
         emit Deposited(account, amount);
     }
 
+    /**
+     * @dev Internal mechanism for handling withdrawals.
+     *
+     * @param account Account which is doing the withrawal
+     * @param amount The amount to debit from `account`s internal balance
+     */
     function _withdraw(address account, uint256 amount) internal {
         assert(account != address(0)); // Should never be 0x0
         require(amount > 0, "BaseAMLOracle: amount to withdraw must be greater than 0");
@@ -381,14 +418,15 @@ abstract contract BaseAMLOracle is AccessControl, IBaseAMLOracle {
     function _getAMLStatusCopy(address client, string calldata target) internal view returns (AMLStatus memory status) {
         require(client != address(0), "BaseAMLOracle: client must not be 0x0");
         require(_getStringLength(target) > 0, "BaseAMLOracle: target must not be an empty string");
+
         status = _amlStatuses[client][target];
-        require(status.timestamp > 0, "BaseAMLOracle: no such AML Status");
+        require(status.timestamp > 0, "BaseAMLOracle: no such AML status");
 
         return status;
     }
 
     /**
-     * @dev Determine fee for this particual {AMLStatus} query.
+     * @dev Determine fee for this particular {AMLStatus} query.
      *
      * The fee can be unique for each {AMLStatus} query. Default fee can be
      * also used, in order to save gas while placing the status on-chain.
