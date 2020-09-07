@@ -43,10 +43,21 @@ See {IETHOracle-withdrawETH}.
 See {IETHOracle-fetchAMLStatusForETH} and
 {IBaseAMLOracle-fetchAMLStatus}.
 
-### `_getTotalBalance() → uint256 balance` (internal)
+### `getTotalBalance() → uint256 balance` (public)
 
 
 
+This function provides the total amount of assets to
+{BaseAMLOracle} and others interested of Oracle's total asset balance.
+This differs from the {BaseAMLOracle-_totalDeposits}: unlike _totalDeposits, this
+value can be forcefully increased, hence it must be higher or equal to
+_totalDeposits.
 
+
+### `getInterfaceHash() → bytes32 interfaceHash` (public)
+
+
+
+See {IBaseAMLOracle-getInterfaceHash}.
 
 

@@ -66,7 +66,8 @@ this AML status. If an AML status is already present on-chain, the
 status will be updated.
 Timestamp is not checked for overflow, and this is intentionally done
 for simplifying the code:
-- the timestamp will overflow in ~10 nonillion (US) years (10,783,118,943,836,478,994,022,445,749,252), and
+- the timestamp will overflow in ~10 nonillion (US) years
+(10,783,118,943,836,478,994,022,445,749,252), and
 - the timestamp is not critical, the Oracle and Client can work well
 even if the timstamp is wrong.
 The cScore is enforced to contain values between 0 - 99 so the Client
@@ -98,8 +99,8 @@ On successful execution, {AMLStatusDeleted} EVM event is emitted.
 
 
 Ask AML status as a Client.
-Client can use this function to ask an {AMLStatus} for an arbitrary address.
-Asking is a part of the request process.
+Client can use this function to ask an {AMLStatus} for an arbitrary
+address. Asking is a part of the request process.
 No actual state change is done here to save gas: the only objective
 is to notify the Oracle Operator via an EVM event to prepare AML status
 for the Client.
@@ -121,6 +122,9 @@ gas refund.
 The fee is paid during fetch.
 Anyone with a balance for the fee can call this function: no boarding
 needed.
+If the maxFee is **not set** (maxFee == 0), the price must be verified
+during this very transaction, in order to avoid transaction ordering
+attacks.
 On successful execution, {AMLStatusFetched} EVM event is emitted.
 
 
@@ -201,6 +205,34 @@ internal accounts of funds.
 We follow OpenZeppelin's encapsulation pattern, so instead of `public`
 and its native getter, we need to implement our own.
 This is public so it can be used as-is in derived contracts also.
+
+
+### `getTotalDeposits() → uint256 totalDeposits` (external)
+
+
+
+The way to get total deposited funds.
+
+
+### `getTotalBalance() → uint256 balance` (external)
+
+
+
+This function provides the total amount of assets to
+{BaseAMLOracle} and others interested of Oracle's total asset balance.
+This differs from the {BaseAMLOracle-_totalDeposits}: unlike
+_totalDeposits, this value can be forcefully increased, hence it must be
+higher or equal to _totalDeposits.
+
+
+### `getInterfaceHash() → bytes32 interfaceHash` (external)
+
+
+
+Providing ERC-1820 interface identifier to 3rd party smart
+contracts.
+In addition to public use, this is also used internally by
+{BaseAMLOracle-_donate()}.
 
 
 

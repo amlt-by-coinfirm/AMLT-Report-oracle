@@ -10,6 +10,11 @@
 
 
 Donating Ether to an account internally.
+Account receiving the donation must have AMLOracleAcceptDonationsInETH
+interface set in the ERC-1820 Registry at
+0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24. The interface indicates
+willingness to accept donations from all AML ETHOracles, not just this
+particular oracle.
 On successful execution, {Donated} EVM event is emitted.
 
 
