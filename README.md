@@ -28,6 +28,8 @@ This initial design specifies two independent Oracles, one taking fees in Ether,
 AMLT (Coinfirm’s own AML Token).
 
 ## Design
+![Design diagram in SVG](/design.svg)
+
 - There is one base contract named ​ AMLOracle​ , which is inherited by user-facing ​ AMLTOracle
 (for AMLT payments) and ​ ETHOracle​ (for Ether payments). Different smart contracts inheriting
 the ​ AMLOracle​ can be introduced later, if needed.
